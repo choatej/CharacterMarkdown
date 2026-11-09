@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Armory Builds**: graduated from BETA; Solo PvE / PvP presets still enable `includeArmoryBuilds` (factory default remains Off)
 
 ### Fixed
+- **Docs**: `examples/templates/claude_project_setup.md` no longer tells users to run `/cm github` (that format was removed); it now documents `/cm`, `/cm coach`, and copying multi-chunk exports
 - **Regenerate**: no longer writes a Generating placeholder into the window (it sat under the color bar and buttons)
 - **Armory Builds**: section no longer always shows "No armory data available" (flat collector payload now accepted by the generator)
 
