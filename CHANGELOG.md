@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Regenerate**: no longer writes a Generating placeholder into the window (it sat under the color bar and buttons)
 - **Armory Builds**: section no longer always shows "No armory data available" (flat collector payload now accepted by the generator)
+- **Antiquities**: the section no longer disappears from the export: the Active Leads table used quality constants that do not exist in the game ("table index is nil"), and the detailed sets table read a field the collector never sets; either error dropped the whole section
 
 ## [2.3.0] - 2026-08-03
 

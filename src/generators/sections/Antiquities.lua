@@ -48,28 +48,44 @@ end
 -- HELPER FUNCTIONS
 -- =====================================================
 
+-- Antiquity quality uses the same numeric scale as item quality. The game has no
+-- ANTIQUITY_QUALITY_* constants: using them as table keys raised "table index is nil" and
+-- the whole section was dropped, so key by the item-quality constants (with numeric
+-- fallbacks so a key can never be nil).
+local QUALITY_TRASH = ITEM_QUALITY_TRASH or 0
+local QUALITY_NORMAL = ITEM_QUALITY_NORMAL or 1
+local QUALITY_MAGIC = ITEM_QUALITY_MAGIC or 2
+local QUALITY_ARCANE = ITEM_QUALITY_ARCANE or 3
+local QUALITY_ARTIFACT = ITEM_QUALITY_ARTIFACT or 4
+local QUALITY_LEGENDARY = ITEM_QUALITY_LEGENDARY or 5
+local QUALITY_MYTHIC = ITEM_QUALITY_MYTHIC or 6
+
+local QUALITY_COLORS = {
+    [QUALITY_TRASH] = "⚪", -- White/Trash
+    [QUALITY_NORMAL] = "⚪", -- White/Normal
+    [QUALITY_MAGIC] = "🟢", -- Green/Magic
+    [QUALITY_ARCANE] = "🔵", -- Blue/Arcane
+    [QUALITY_ARTIFACT] = "🟣", -- Purple/Artifact
+    [QUALITY_LEGENDARY] = "🟡", -- Gold/Legendary
+    [QUALITY_MYTHIC] = "🟠", -- Orange/Mythic
+}
+
+local QUALITY_NAMES = {
+    [QUALITY_TRASH] = "Common",
+    [QUALITY_NORMAL] = "Common",
+    [QUALITY_MAGIC] = "Fine",
+    [QUALITY_ARCANE] = "Superior",
+    [QUALITY_ARTIFACT] = "Epic",
+    [QUALITY_LEGENDARY] = "Legendary",
+    [QUALITY_MYTHIC] = "Mythic",
+}
+
 local function GetQualityColor(quality)
-    local colors = {
-        [ANTIQUITY_QUALITY_TRASH] = "⚪", -- White/Trash
-        [ANTIQUITY_QUALITY_MAGIC] = "🟢", -- Green/Magic
-        [ANTIQUITY_QUALITY_ARCANE] = "🔵", -- Blue/Arcane
-        [ANTIQUITY_QUALITY_ARTIFACT] = "🟣", -- Purple/Artifact
-        [ANTIQUITY_QUALITY_LEGENDARY] = "🟡", -- Gold/Legendary
-        [ANTIQUITY_QUALITY_MYTHIC] = "🟠", -- Orange/Mythic
-    }
-    return colors[quality] or "⚪"
+    return QUALITY_COLORS[quality] or "⚪"
 end
 
 local function GetQualityName(quality)
-    local names = {
-        [ANTIQUITY_QUALITY_TRASH] = "Common",
-        [ANTIQUITY_QUALITY_MAGIC] = "Fine",
-        [ANTIQUITY_QUALITY_ARCANE] = "Superior",
-        [ANTIQUITY_QUALITY_ARTIFACT] = "Epic",
-        [ANTIQUITY_QUALITY_LEGENDARY] = "Legendary",
-        [ANTIQUITY_QUALITY_MYTHIC] = "Mythic",
-    }
-    return names[quality] or "Unknown"
+    return QUALITY_NAMES[quality] or "Unknown"
 end
 
 -- =====================================================
@@ -185,8 +201,10 @@ local function GenerateAntiquitySets(antiquityData)
     markdown = markdown .. "|:---------|:---------|----------:|------:|\n"
 
     for _, setData in ipairs(antiquityData.sets) do
-        local percent = setData.totalAntiquities > 0
-                and math.floor((setData.completedAntiquities / setData.totalAntiquities) * 100)
+        -- The collector gives each set numAntiquities (its size) plus discovered/completed counts
+        local totalAntiquities = setData.numAntiquities or #(setData.antiquities or {})
+        local percent = totalAntiquities > 0
+                and math.floor(((setData.completedAntiquities or 0) / totalAntiquities) * 100)
             or 0
         local progressBar = CM.utils.GenerateProgressBar(percent, 10)
         local completeIcon = percent == 100 and "✅" or "🔄"
@@ -201,9 +219,9 @@ local function GenerateAntiquitySets(antiquityData)
             .. " "
             .. percent
             .. "% | "
-            .. setData.discoveredAntiquities
+            .. (setData.discoveredAntiquities or 0)
             .. " | "
-            .. setData.totalAntiquities
+            .. totalAntiquities
             .. " |\n"
     end
     markdown = markdown .. "\n"
