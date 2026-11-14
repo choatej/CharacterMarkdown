@@ -14,6 +14,7 @@ globals = {
     "CharacterMarkdownSettings",
     "CharacterMarkdownData",
     "CharacterMarkdownSetDump",
+    "CharacterMarkdownExport",
     "CharacterMarkdown_RegenerateMarkdown",
     "CharacterMarkdown_OpenSettings",
     "CharacterMarkdown_CopyToClipboard",

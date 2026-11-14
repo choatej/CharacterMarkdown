@@ -3,7 +3,7 @@
 ## Version: @project-version@
 ## AddOnVersion: 20260805
 ## APIVersion: 101050 101049
-## SavedVariables: CharacterMarkdownSettings CharacterMarkdownSetDump
+## SavedVariables: CharacterMarkdownSettings CharacterMarkdownSetDump CharacterMarkdownExport
 ## OptionalDependsOn: LibAddonMenu-2.0>=40 LibDebugLogger>=250 LibSets>=86 LibSlashCommander>=4 LibChatMessage LibAsync LibCustomIcons
 ## Description: Export character data as Markdown with UESP links. Use /cm (alias: /markdown).
 ## This file is AddOnVersion: 20260805
@@ -26,6 +26,7 @@ src/utils/LayoutCalculator.lua
 src/utils/LayoutCalculatorTests.lua
 src/utils/ChunkingHelpers.lua
 src/utils/Chunking.lua
+src/utils/ExportStore.lua
 src/utils/TestChunking.lua
 src/utils/TestValidation.lua
 src/utils/SectionPresenceTests.lua
@@ -147,6 +148,7 @@ src/commands/Debug.lua
 src/commands/Settings.lua
 src/commands/Test.lua
 src/commands/SetDump.lua
+src/commands/Save.lua
 src/Commands.lua
 src/Events.lua
 
