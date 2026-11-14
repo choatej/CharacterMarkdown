@@ -118,3 +118,77 @@ function api.GetAchievementDetail(achievementId)
         timestamp = timestamp,
     }
 end
+
+-- =====================================================
+-- UNCOMPLETED ACHIEVEMENT PROGRESS
+-- =====================================================
+
+---Achievement id at a position in the achievements tree.
+---@param catIndex number top-level category index
+---@param subCatIndex number|nil nil for achievements listed directly under the category
+---@param achIndex number position within that list
+---@return number|nil
+function api.GetAchievementIdAt(catIndex, subCatIndex, achIndex)
+    local id = CM.SafeCall(GetAchievementId, catIndex, subCatIndex, achIndex)
+    if type(id) == "number" and id ~= 0 then
+        return id
+    end
+    return nil
+end
+
+---First step of an achievement that is not complete yet.
+-- Some achievements are chains ("Slay 10 / 100 / 1000"); the list shows the first step,
+-- and the game links the later ones. Returns nil when the whole chain is complete.
+---@param achievementId number
+---@return number|nil achievementId of the first incomplete step
+---@return string|nil name
+---@return number|nil points
+function api.GetFirstIncompleteStep(achievementId)
+    local id = achievementId
+    -- The guard stops a malformed (looping) chain from running forever
+    for _ = 1, 50 do
+        if not id or id == 0 then
+            return nil
+        end
+        local ok, name, _, points, _, completed = CM.SafeCallMulti(GetAchievementInfo, id)
+        if not ok or not name then
+            return nil
+        end
+        if not completed then
+            return id, name, points
+        end
+        id = CM.SafeCall(GetNextAchievementInLine, id)
+    end
+    return nil
+end
+
+---Progress of one achievement, summed over its criteria.
+---@param achievementId number
+---@param maxListed number|nil cap on named unfinished criteria (default 25)
+---@return table { done, required, remaining = { names }, moreRemaining }
+function api.GetProgressSummary(achievementId, maxListed)
+    maxListed = maxListed or 25
+    local numCriteria = CM.SafeCall(GetAchievementNumCriteria, achievementId) or 0
+    local done, required = 0, 0
+    local remaining, more = {}, 0
+
+    for i = 1, numCriteria do
+        local ok, description, numCompleted, numRequired = CM.SafeCallMulti(GetAchievementCriterion, achievementId, i)
+        if ok then
+            numCompleted = tonumber(numCompleted) or 0
+            numRequired = tonumber(numRequired) or 0
+            done = done + math.min(numCompleted, numRequired)
+            required = required + numRequired
+            -- Name the unfinished items of checklist achievements; a single counter has nothing to list
+            if numCriteria > 1 and numCompleted < numRequired and description and description ~= "" then
+                if #remaining < maxListed then
+                    table.insert(remaining, description)
+                else
+                    more = more + 1
+                end
+            end
+        end
+    end
+
+    return { done = done, required = required, remaining = remaining, moreRemaining = more }
+end

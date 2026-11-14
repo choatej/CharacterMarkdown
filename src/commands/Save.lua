@@ -100,6 +100,26 @@ Formats.Register("coach", {
     end,
 })
 
+Formats.Register("achievements", {
+    description = "Progress on every uncompleted achievement (large; takes a few seconds)",
+    Generate = function(onDone, onError)
+        local collect = CM.collectors and CM.collectors.CollectUncompletedAchievements
+        local render = CM.generators and CM.generators.RenderAchievementProgress
+        if not (collect and render) then
+            onError("Achievement progress is not loaded! Try /reloadui")
+            return
+        end
+        collect(function(data)
+            local ok, text = pcall(render, data)
+            if ok then
+                onDone(text)
+            else
+                onError(text)
+            end
+        end, onError)
+    end,
+})
+
 --- /cm save [format]
 -- @param args string|nil a registered format name or alias; empty means "markdown"
 local function HandleSave(args)

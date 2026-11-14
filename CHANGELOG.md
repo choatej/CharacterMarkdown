@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Save to SavedVariables**: `/cm save [format]` (formats: `markdown`, `coach`; more can be registered in `src/utils/ExportFormats.lua`) writes the generated Markdown to the `CharacterMarkdownExport` SavedVariables table in pieces under the 2000-character limit, so an external script can read it from `SavedVariables/CharacterMarkdown.lua` after `/reloadui` instead of copying from the window
+- **Achievement progress dump**: `/cm save achievements` saves every uncompleted achievement with its progress (counts, and the unfinished items of checklist achievements) as a separate export, kept out of the normal profile because it is large
 - **Optional libraries**: LibChatMessage (chat pipeline), LibAsync (frame-yielding inventory/achievements collection), LibCustomIcons (formalized optional dep + integration helper)
 - **AI / Build Coach export**: `/cm coach` (aliases `ai`, `build-coach`; `/markdown` is an alias for `/cm`) emits a compact paste schema (identity, bars, sets, collectibles, CP, notes, gaps) for ChatGPT/Claude; LAM **Preset: AI / Build Coach** for lean normal exports
 - **Build Coach Collectibles**: `/cm coach` includes active mount/costume/pet/personality plus owned mounts, pets, and costumes; Appearance API reports active vanity pet; AI / Build Coach preset enables `includeCollectibles`, `showCollectiblesDetailed`, and `includeAppearance`

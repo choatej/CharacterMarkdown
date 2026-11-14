@@ -625,6 +625,8 @@ read_globals = {
     "GetAchievementPriorAchievementId",
     "GetAchievementNumCriteria",
     "GetAchievementCriterion",
+    "GetAchievementId",
+    "GetNextAchievementInLine",
     "GetEarnedAchievementPoints",
     "GetTotalAchievementPoints",
 
