@@ -25,6 +25,7 @@
 --       },
 --   }
 -- Concatenate textParts with no separator to rebuild the text. charCount is its length in bytes.
+-- Structured exports store a table instead of textParts (see STRUCTURED DATA below).
 
 local ExportStore = {}
 
@@ -126,16 +127,10 @@ function ExportStore.Flatten(result, stripChunk)
     return table_concat(pieces)
 end
 
---- Store one export in `container` (created if nil) and return it.
--- Other characters and other formats already in the container are kept; an export with the
--- same `name` and `format` is replaced.
--- @param container table|nil existing saved table
--- @param name string character name
--- @param entry table { text = string, format = string, timestamp = number|nil }
--- @param meta table|nil replaces container.meta when given
--- @return table container
--- @return number number of parts written
-function ExportStore.Put(container, name, entry, meta)
+--- Find or create the exports table for one character inside `container`.
+-- @return table container (created if nil)
+-- @return table the character's exports table
+local function EnsureExports(container, name, meta)
     if type(container) ~= "table" then
         container = {}
     end
@@ -154,15 +149,177 @@ function ExportStore.Put(container, name, entry, meta)
     if type(character.exports) ~= "table" then
         character.exports = {}
     end
+    return container, character.exports
+end
+
+--- Store one text export in `container` (created if nil) and return it.
+-- Other characters and other formats already in the container are kept; an export with the
+-- same `name` and `format` is replaced.
+-- @param container table|nil existing saved table
+-- @param name string character name
+-- @param entry table { text = string, format = string, timestamp = number|nil }
+-- @param meta table|nil replaces container.meta when given
+-- @return table container
+-- @return number number of parts written
+function ExportStore.Put(container, name, entry, meta)
+    local exports
+    container, exports = EnsureExports(container, name, meta)
 
     local text = entry.text
     local parts = ExportStore.SplitText(text)
-    character.exports[entry.format or "text"] = {
+    exports[entry.format or "text"] = {
         timestamp = entry.timestamp,
         charCount = #text,
         textParts = parts,
     }
     return container, #parts
+end
+
+-- =====================================================
+-- STRUCTURED DATA
+-- =====================================================
+-- Text exports are stored as textParts. A structured export stores a table instead:
+--   exports["data"] = { timestamp, kind = "data", data = { ... }, report = { ... } }
+-- SavedVariables can hold nested tables of strings, numbers and booleans directly, but not
+-- functions or userdata, and it drops any string of 2000+ characters. Sanitize copies a table
+-- into a form that is safe to store and reports what it had to change:
+--   * a string longer than the limit becomes { ["$parts"] = { "...", "..." } } (join the parts)
+--   * functions, userdata, threads, NaN/infinite numbers and non-string/number keys are dropped
+--   * cycles and tables nested deeper than MAX_DEPTH are dropped
+-- Numeric keys are kept as they are (a table with holes stays a table with those keys).
+
+ExportStore.PARTS_KEY = "$parts"
+ExportStore.MAX_DEPTH = 16
+ExportStore.MAX_NODES = 200000
+ExportStore.MAX_DROPPED_LISTED = 50
+
+local function PathString(path, depth)
+    if depth == 0 then
+        return "<root>"
+    end
+    local pieces = {}
+    for i = 1, depth do
+        pieces[i] = tostring(path[i])
+    end
+    return table_concat(pieces, ".")
+end
+
+--- Copy `value` into a form SavedVariables can store.
+-- @param value any usually a table
+-- @param options table|nil { maxString, maxDepth, maxNodes }
+-- @return any the sanitized copy (nil if the value itself had to be dropped)
+-- @return table report { tables, strings, longStrings, numbers, booleans, dropped, droppedList, truncated }
+function ExportStore.Sanitize(value, options)
+    options = options or {}
+    local maxString = options.maxString or ExportStore.MAX_STRING
+    local maxDepth = options.maxDepth or ExportStore.MAX_DEPTH
+    local maxNodes = options.maxNodes or ExportStore.MAX_NODES
+
+    local report = {
+        tables = 0,
+        strings = 0,
+        longStrings = 0,
+        numbers = 0,
+        booleans = 0,
+        dropped = 0,
+        droppedList = {},
+        truncated = false,
+    }
+    local nodes = 0
+    local ancestors = {} -- tables currently being copied; seeing one again means a cycle
+    local path, depth = {}, 0
+
+    local function drop(reason)
+        report.dropped = report.dropped + 1
+        if #report.droppedList < ExportStore.MAX_DROPPED_LISTED then
+            report.droppedList[#report.droppedList + 1] = PathString(path, depth) .. " (" .. reason .. ")"
+        end
+    end
+
+    local copy
+    copy = function(v)
+        nodes = nodes + 1
+        if nodes > maxNodes then
+            report.truncated = true
+            return nil
+        end
+
+        local kind = type(v)
+        if kind == "boolean" then
+            report.booleans = report.booleans + 1
+            return v
+        elseif kind == "number" then
+            if v ~= v or v == math.huge or v == -math.huge then
+                drop("number is NaN or infinite")
+                return nil
+            end
+            report.numbers = report.numbers + 1
+            return v
+        elseif kind == "string" then
+            if #v > maxString then
+                report.longStrings = report.longStrings + 1
+                return { [ExportStore.PARTS_KEY] = ExportStore.SplitText(v, maxString) }
+            end
+            report.strings = report.strings + 1
+            return v
+        elseif kind == "table" then
+            if depth >= maxDepth then
+                drop("nested deeper than " .. maxDepth)
+                return nil
+            end
+            if ancestors[v] then
+                drop("cycle")
+                return nil
+            end
+            ancestors[v] = true
+            local out = {}
+            for key, item in pairs(v) do
+                local keyType = type(key)
+                local keyOk = keyType == "string"
+                    or (keyType == "number" and key == key and key ~= math.huge and key ~= -math.huge)
+                if keyOk then
+                    depth = depth + 1
+                    path[depth] = key
+                    local copied = copy(item)
+                    depth = depth - 1
+                    if copied ~= nil then
+                        out[key] = copied
+                    end
+                else
+                    drop("key of type " .. keyType)
+                end
+            end
+            ancestors[v] = nil
+            report.tables = report.tables + 1
+            return out
+        end
+
+        -- function, userdata, thread
+        drop(kind)
+        return nil
+    end
+
+    local clean = copy(value)
+    return clean, report
+end
+
+--- Store one structured export in `container` (created if nil) and return it.
+-- @param container table|nil existing saved table
+-- @param name string character name
+-- @param entry table { data = table, format = string, timestamp = number|nil, report = table|nil }
+-- @param meta table|nil replaces container.meta when given
+-- @return table container
+function ExportStore.PutData(container, name, entry, meta)
+    local exports
+    container, exports = EnsureExports(container, name, meta)
+
+    exports[entry.format or "data"] = {
+        timestamp = entry.timestamp,
+        kind = "data",
+        data = entry.data,
+        report = entry.report,
+    }
+    return container
 end
 
 -- The only CharacterMarkdown-specific line in this file.
