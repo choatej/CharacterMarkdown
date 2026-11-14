@@ -1,6 +1,6 @@
 -- CharacterMarkdown - Save Command Handlers
--- /cm save       - write the full Markdown export to SavedVariables
--- /cm save coach - write the compact AI / build-coach export to SavedVariables
+-- /cm save [format] - write an export to SavedVariables. Formats come from the registry in
+--                     src/utils/ExportFormats.lua: markdown (default), coach (alias: ai)
 --
 -- ESO add-ons cannot write files. SavedVariables is the one channel out of the game:
 -- the client writes the CharacterMarkdownExport table to
@@ -66,45 +66,61 @@ local function Store(formatter, result)
     )
 end
 
---- /cm save [coach]
--- @param args string|nil "" or "coach" (aliases: ai, build-coach)
+-- =====================================================
+-- BUILT-IN FORMATS
+-- =====================================================
+
+local Formats = CM.utils.ExportFormats
+
+Formats.Register("markdown", {
+    description = "Full Markdown profile (default)",
+    Generate = function(onDone, onError)
+        if not (CM.generators and CM.generators.Run) then
+            onError("Markdown generator not loaded! Try /reloadui")
+            return
+        end
+        CM.generators.Run(onDone, onError)
+    end,
+})
+
+Formats.Register("coach", {
+    aliases = { "ai", "build-coach" },
+    description = "Compact AI / build-coach export",
+    Generate = function(onDone, onError)
+        if not (CM.generators and CM.generators.GenerateBuildCoach) then
+            onError("Build coach generator not loaded! Try /reloadui")
+            return
+        end
+        local ok, result = pcall(CM.generators.GenerateBuildCoach)
+        if ok then
+            onDone(result)
+        else
+            onError(result)
+        end
+    end,
+})
+
+--- /cm save [format]
+-- @param args string|nil a registered format name or alias; empty means "markdown"
 local function HandleSave(args)
     if not CM.isInitialized then
         CM.Error("Addon not fully initialized. Try again in a moment or /reloadui")
         return
     end
 
-    local arg = (args or ""):lower():match("^%s*(%S*)")
-    local isCoach = arg == "coach" or arg == "ai" or arg == "build-coach"
-
-    if isCoach then
-        if not (CM.generators and CM.generators.GenerateBuildCoach) then
-            CM.Error("Build coach generator not loaded! Try /reloadui")
-            return
-        end
-        local ok, result = pcall(CM.generators.GenerateBuildCoach)
-        if not ok then
-            CM.Error("Failed to generate build coach export:")
-            CM.Error(tostring(result))
-            return
-        end
-        Store("coach", result)
+    local arg = (args or ""):match("^%s*(%S*)")
+    local format, name = Formats.Resolve(arg ~= "" and arg or "markdown")
+    if not format then
+        CM.Error(string_format("Unknown format '%s'.", arg))
+        CM.Info("Available formats: " .. table.concat(Formats.Names(), ", "))
         return
     end
 
-    if arg ~= "" then
-        CM.Warn(string_format("Unknown save option '%s'. Saving the full export.", arg))
-    end
-
-    if not (CM.generators and CM.generators.Run) then
-        CM.Error("Markdown generator not loaded! Try /reloadui")
-        return
-    end
-    CM.Info("Generating export to save...")
-    CM.generators.Run(function(result)
-        Store("markdown", result)
+    CM.Info(string_format("Generating %s export to save...", name))
+    format.Generate(function(result)
+        Store(name, result)
     end, function(err)
-        CM.Error("Failed to generate markdown:")
+        CM.Error(string_format("Failed to generate %s export:", name))
         CM.Error(tostring(err))
     end)
 end

@@ -27,6 +27,7 @@ src/utils/LayoutCalculatorTests.lua
 src/utils/ChunkingHelpers.lua
 src/utils/Chunking.lua
 src/utils/ExportStore.lua
+src/utils/ExportFormats.lua
 src/utils/TestChunking.lua
 src/utils/TestValidation.lua
 src/utils/SectionPresenceTests.lua
