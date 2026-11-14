@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Regenerate**: no longer writes a Generating placeholder into the window (it sat under the color bar and buttons)
 - **Armory Builds**: section no longer always shows "No armory data available" (flat collector payload now accepted by the generator)
+- **Settings**: settings served from the SavedVariables fallback layer (for example values carried over by the server-namespace migration) now reach the generators; the merged settings view read only the table's own keys, so sections such as Antiquities and Achievements stayed off even though the settings panel showed them on
 
 ## [2.3.0] - 2026-08-03
 
