@@ -102,6 +102,9 @@ local function GenerateAntiquitiesSummary(antiquityData)
         .. discoveryPercent
         .. "%) |\n"
     markdown = markdown .. "| **Active Leads** | " .. summary.activeLeads .. " |\n"
+    if (summary.leadsExpiringSoon or 0) > 0 then
+        markdown = markdown .. "| **Leads Expiring Within 7 Days** | " .. summary.leadsExpiringSoon .. " |\n"
+    end
     markdown = markdown
         .. "| **Completed Sets** | "
         .. summary.completedSets
@@ -113,6 +116,19 @@ local function GenerateAntiquitiesSummary(antiquityData)
     markdown = markdown .. "\n"
 
     return markdown
+end
+
+--- "3d 4h" when a day or more is left, otherwise "5h 12m"; "-" when there is no timer.
+local function FormatLeadTimer(seconds)
+    if type(seconds) ~= "number" or seconds <= 0 then
+        return "-"
+    end
+    local days = math.floor(seconds / 86400)
+    local hours = math.floor((seconds % 86400) / 3600)
+    if days > 0 then
+        return string.format("%dd %dh", days, hours)
+    end
+    return string.format("%dh %dm", hours, math.floor((seconds % 3600) / 60))
 end
 
 -- =====================================================
@@ -136,11 +152,9 @@ local function GenerateActiveLeads(antiquityData)
         local qualityIcon = GetQualityColor(lead.quality)
         local qualityName = GetQualityName(lead.quality)
         local repeatableText = lead.isRepeatable and "✓" or "✗"
-        local timerText = "-"
-        if lead.leadSecondsRemaining and lead.leadSecondsRemaining > 0 then
-            local hours = math.floor(lead.leadSecondsRemaining / 3600)
-            local mins = math.floor((lead.leadSecondsRemaining % 3600) / 60)
-            timerText = string.format("%dh %dm", hours, mins)
+        local timerText = FormatLeadTimer(lead.leadSecondsRemaining)
+        if lead.expiresSoon then
+            timerText = "⚠️ " .. timerText
         end
 
         markdown = markdown

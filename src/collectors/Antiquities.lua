@@ -3,6 +3,9 @@
 
 local CM = CharacterMarkdown
 
+-- A lead with less than this much time left is flagged as expiring soon.
+local EXPIRING_SOON_SECONDS = 7 * 24 * 60 * 60
+
 local function CollectAntiquitiesData()
     local sets = CM.api.antiquities.GetSets()
 
@@ -15,6 +18,7 @@ local function CollectAntiquitiesData()
             completedAntiquities = 0,
             totalSets = 0,
             completedSets = 0,
+            leadsExpiringSoon = 0,
         },
         activeLeads = {},
     }
@@ -71,8 +75,29 @@ local function CollectAntiquitiesData()
             and math.floor((data.summary.completedSets / data.summary.totalSets) * 100)
         or 0
 
+    -- Flag leads that run out within a week
+    for _, lead in ipairs(activeLeads) do
+        local seconds = lead.leadSecondsRemaining
+        lead.expiresSoon = type(seconds) == "number" and seconds > 0 and seconds <= EXPIRING_SOON_SECONDS
+        if lead.expiresSoon then
+            data.summary.leadsExpiringSoon = data.summary.leadsExpiringSoon + 1
+        end
+    end
+
+    -- Leads with a timer first, soonest to expire on top; then by quality, then name
     table.sort(activeLeads, function(a, b)
-        return (a.quality or 0) > (b.quality or 0)
+        local aTimed = type(a.leadSecondsRemaining) == "number" and a.leadSecondsRemaining > 0
+        local bTimed = type(b.leadSecondsRemaining) == "number" and b.leadSecondsRemaining > 0
+        if aTimed ~= bTimed then
+            return aTimed
+        end
+        if aTimed and a.leadSecondsRemaining ~= b.leadSecondsRemaining then
+            return a.leadSecondsRemaining < b.leadSecondsRemaining
+        end
+        if (a.quality or 0) ~= (b.quality or 0) then
+            return (a.quality or 0) > (b.quality or 0)
+        end
+        return (a.name or "") < (b.name or "")
     end)
 
     data.activeLeads = activeLeads

@@ -39,43 +39,54 @@ function api.GetAntiquityInfo(antiquityId)
         return nil
     end
 
-    if _antiquityCache[antiquityId] then
-        return _antiquityCache[antiquityId]
+    -- Static facts are cached; they change only on antiquity events, which clear the cache.
+    local cached = _antiquityCache[antiquityId]
+    if not cached then
+        local numRecovered = CM.SafeCall(GetNumAntiquitiesRecovered, antiquityId) or 0
+        local numAchieved = CM.SafeCall(GetNumGoalsAchievedForAntiquity, antiquityId) or 0
+        local numGoals = CM.SafeCall(GetTotalNumGoalsForAntiquity, antiquityId) or 0
+        cached = {
+            id = antiquityId,
+            name = CM.SafeCall(GetAntiquityName, antiquityId) or "Unknown",
+            quality = CM.SafeCall(GetAntiquityQuality, antiquityId) or ANTIQUITY_QUALITY_WHITE,
+            isDiscovered = numRecovered > 0,
+            isCompleted = numGoals > 0 and numAchieved >= numGoals,
+            isRepeatable = CM.SafeCall(IsAntiquityRepeatable, antiquityId) or false,
+            numRecovered = numRecovered,
+            numAchieved = numAchieved,
+            numGoals = numGoals,
+        }
+        _antiquityCache[antiquityId] = cached
     end
 
-    local name = CM.SafeCall(GetAntiquityName, antiquityId) or "Unknown"
-    local quality = CM.SafeCall(GetAntiquityQuality, antiquityId) or ANTIQUITY_QUALITY_WHITE
+    -- Lead state runs on a clock (a lead can expire without any event), so read it fresh
+    -- on every call instead of caching it.
     local hasLead = CM.SafeCall(DoesAntiquityHaveLead, antiquityId) or false
-    local isRepeatable = CM.SafeCall(IsAntiquityRepeatable, antiquityId) or false
-    local numRecovered = CM.SafeCall(GetNumAntiquitiesRecovered, antiquityId) or 0
-    local numAchieved = CM.SafeCall(GetNumGoalsAchievedForAntiquity, antiquityId) or 0
-    local numGoals = CM.SafeCall(GetTotalNumGoalsForAntiquity, antiquityId) or 0
     local leadSeconds = nil
+    local leadExpiresAt = nil
     if hasLead and GetAntiquityLeadTimeRemainingSeconds then
         leadSeconds = CM.SafeCall(GetAntiquityLeadTimeRemainingSeconds, antiquityId)
+        if type(leadSeconds) == "number" and leadSeconds > 0 then
+            -- Approximate (the game reports whole seconds left): fine for "expires this week"
+            leadExpiresAt = CM.api.time.GetNow() + leadSeconds
+        end
     end
 
-    local isDiscovered = numRecovered > 0
-    local isCompleted = numGoals > 0 and numAchieved >= numGoals
-    local isInProgress = hasLead and (not isCompleted or isRepeatable)
-
-    local result = {
-        id = antiquityId,
-        name = name,
-        quality = quality,
+    return {
+        id = cached.id,
+        name = cached.name,
+        quality = cached.quality,
         hasLead = hasLead,
-        isDiscovered = isDiscovered,
-        isCompleted = isCompleted,
-        isRepeatable = isRepeatable,
-        isInProgress = isInProgress,
-        numRecovered = numRecovered,
-        numAchieved = numAchieved,
-        numGoals = numGoals,
+        isDiscovered = cached.isDiscovered,
+        isCompleted = cached.isCompleted,
+        isRepeatable = cached.isRepeatable,
+        isInProgress = hasLead and (not cached.isCompleted or cached.isRepeatable),
+        numRecovered = cached.numRecovered,
+        numAchieved = cached.numAchieved,
+        numGoals = cached.numGoals,
         leadSecondsRemaining = leadSeconds,
+        leadExpiresAt = leadExpiresAt,
     }
-
-    _antiquityCache[antiquityId] = result
-    return result
 end
 
 function api.GetActiveScryTarget()
