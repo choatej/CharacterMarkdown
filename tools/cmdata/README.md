@@ -16,10 +16,10 @@ python3 -m tools.cmdata FILE --format md --out build.md
 from tools.cmdata import load_export, to_json, to_lean_markdown
 
 export = load_export("Name_data_2026-11-14.json")
-export.character.class_name                    # "Templar"
+export.character.class_name  # "Templar"
 [i.name for i in export.equipment.items]
-export.equipment.sets[0].bonuses[0].text       # colour codes already removed
-for lead in export.antiquities.leads_expiring_within():   # default: one week
+export.equipment.sets[0].bonuses[0].text  # colour codes already removed
+for lead in export.antiquities.leads_expiring_within():  # default: one week
     print(lead.name, lead.lead_seconds_remaining)
 print(to_lean_markdown(export, ["antiquities", "crafting"]))
 ```

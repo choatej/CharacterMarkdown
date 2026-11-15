@@ -162,14 +162,17 @@ In-game commands added here: `/cm save [markdown|coach|data|achievements]`, `/cm
 
 ## Quality checks
 
-Tools used: LuaJIT, Luacheck, StyLua, Task, Python 3, and Ruff for `tools/`. Ruff is not installed on this machine
-(no pip); a standalone binary can be downloaded from its GitHub releases (`ruff-x86_64-unknown-linux-gnu.tar.gz`, check
-its published SHA-256) and run as `ruff check tools`. It is clean at ruff 0.17.5, the version CI pins.
+Tools used: LuaJIT, Luacheck, StyLua, Task, Python 3, Ruff (lint and format) and Pyrefly (types) for `tools/`, ShellCheck
+for `scripts/`, and actionlint for the workflows. Ruff, Pyrefly, ShellCheck and actionlint are not installed on this machine
+(no pip); standalone binaries can be downloaded from their GitHub releases (check the published SHA-256 where there is one).
+Run them as `ruff check tools`, `ruff format --check tools`, `pyrefly check --preset basic tools`,
+`shellcheck -S error scripts/*.sh scripts/git-hooks/*` and `actionlint -ignore :info: -ignore :style:`. All are clean at
+the versions CI pins (ruff 0.17.5, pyrefly 1.4.1, actionlint 1.7.12).
 
 **CI** (`.github/workflows/ci.yaml`) runs the same checks on every PR update and on every merge to `main`. A changes
 job picks the toolchain: Lua checks (Luacheck, manifest/files/syntax, ESOUI, changelog, README, the offline specs, and an
-advisory StyLua check) when Lua-side files change; Python checks (Ruff, unit tests on 3.10 and 3.13) when Python-side files
-change. `CI result` is the one check to require in branch protection. Every action is pinned to a commit SHA with the
+advisory StyLua check) when Lua-side files change; Python checks (Ruff lint, Ruff format check, Pyrefly `basic`, unit tests on 3.10 and 3.13) when Python-side files
+change; ShellCheck (error severity) when `scripts/` changes; actionlint when a workflow changes. `CI result` is the one check to require in branch protection. Every action is pinned to a commit SHA with the
 release tag in a comment. It runs on this fork: `main` carries the workflow, and `integration/all` is checked through the
 fork-internal draft PR #1 (`choatej/CharacterMarkdown`, base `main`; never merge it, and it is not an upstream PR).
 The first run found that `luajit -bl` fails on the LuaJIT build CI installs (no `jit.*` modules); `task dev:validate:syntax`
@@ -296,7 +299,13 @@ gh pr create --repo solaegis/CharacterMarkdown --base main --head choatej:<branc
 - [ ] Require the `CI result` check in branch protection on the fork's `main` (and tell the maintainer it is the one to require)
 - [ ] After a formatting-only cleanup of `src/`, remove `continue-on-error` from the StyLua step so it blocks
 - [ ] Move the existing release, docs and mdBook workflows from version tags to commit SHAs like the new workflow
-- [ ] Consider Dependabot for GitHub Actions so the pinned SHAs get update PRs
-- [ ] Install `ruff` permanently (or add a `task dev:lint:python`) so it does not depend on a downloaded binary
+- [x] Dependabot for GitHub Actions (`.github/dependabot.yml`, weekly)
+- [ ] Raise Pyrefly from the `basic` preset: the default preset reports 81 issues, 67 of them optional-attribute access
+      in tests, plus a few real annotation mismatches in `tools/cmdata` (`list[str]` passed as `list[str | None]`,
+      `dict[str, int]` holding floats)
+- [ ] Lower ShellCheck's severity from `error` to `warning`: 6 warnings in `scripts/` (unused variables, `ls` in a loop,
+      unquoted expansions) predate the check
+- [ ] Install ruff, pyrefly, shellcheck and actionlint permanently (or add `task` targets) so local runs do not depend on
+      downloaded binaries
 - [ ] Offline Lua tests for `ExportStore` (splitting, sanitizing, `Clear`); the old ad-hoc harnesses were not committed
 - [ ] Delete `prep-backup/*` and `wip/*` branches once nothing needs them

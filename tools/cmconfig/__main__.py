@@ -21,19 +21,38 @@ def readme_with_table(text: str, table: str) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python3 -m tools.cmconfig", description=__doc__)
-    parser.add_argument("--tree", default=str(DEFAULT_TREE), help="tree JSON (default: data/config/tree.json)")
-    parser.add_argument("--defaults", action="store_true", help="mark each item on/off as the add-on's defaults do")
-    parser.add_argument("--table", action="store_true", help="print the mapping table (Markdown) instead of the tree")
-    parser.add_argument("--update-readme", action="store_true", help="refresh the mapping table in data/config/README.md")
+    parser.add_argument(
+        "--tree", default=str(DEFAULT_TREE), help="tree JSON (default: data/config/tree.json)"
+    )
+    parser.add_argument(
+        "--defaults", action="store_true", help="mark each item on/off as the add-on's defaults do"
+    )
+    parser.add_argument(
+        "--table",
+        action="store_true",
+        help="print the mapping table (Markdown) instead of the tree",
+    )
+    parser.add_argument(
+        "--update-readme",
+        action="store_true",
+        help="refresh the mapping table in data/config/README.md",
+    )
     args = parser.parse_args(argv)
 
     tree = ConfigCollection.load(args.tree).with_defaults(read_lua_defaults())
     if args.update_readme:
-        README.write_text(readme_with_table(README.read_text(encoding="utf-8"), tree.mapping_table()), encoding="utf-8")
+        README.write_text(
+            readme_with_table(README.read_text(encoding="utf-8"), tree.mapping_table()),
+            encoding="utf-8",
+        )
     elif args.table:
         print(tree.mapping_table())
     else:
-        print(tree.render(tree.data_from_legacy(read_lua_defaults())) if args.defaults else tree.render())
+        print(
+            tree.render(tree.data_from_legacy(read_lua_defaults()))
+            if args.defaults
+            else tree.render()
+        )
     return 0
 
 
