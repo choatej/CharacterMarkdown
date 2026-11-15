@@ -4,15 +4,44 @@
 prepared, merged together so the whole set can be run, tested and installed in the game at once. Each
 change also exists as its own small branch for a future PR (see [Submitting upstream](#submitting-upstream)).
 
-- Upstream: `solaegis/CharacterMarkdown` (`upstream` remote). Fork: `choatej/CharacterMarkdown` (`origin`).
-- Base: `upstream/main` at `ff6908e` (2026-11-14). Re-check it before submitting anything.
+- Upstream: `solaegis/CharacterMarkdown`. Fork: `choatej/CharacterMarkdown` (`origin`). **The `upstream` remote is
+  removed for now** so nothing can reach the maintainer's repository; see
+  [Remotes and branch protection](#remotes-and-branch-protection) to restore it.
+- Base: `upstream/main` at `ff6908e` (2026-11-14), kept as the local tag `upstream-main-ff6908e`. Re-check it before
+  submitting anything.
 - This file is `README_FORK.md` so it does not touch upstream's `README.md`, which the validators read.
 - Status: the one open upstream PR is #3 (docs fix). **Nothing else is to be sent until #3 gets a maintainer
   response**, so the maintainer is not flooded. Drafts are in `~/src/pr-drafts/` (start with
   `00-submission-plan.md`).
 
+## Remotes and branch protection
+
+**The `upstream` remote is removed** (2026-11-15) so no command can fetch from or push to the maintainer's repository by
+accident. Only `origin` (the fork) exists, and `gh repo set-default` is pinned to `choatej/CharacterMarkdown`, so a bare
+`gh pr create` targets the fork. Removing the remote also deleted the `upstream/*` remote-tracking refs; the base commit
+is kept as the local tag `upstream-main-ff6908e`. The remote's other branches (`code-review`, `feat/p50-export-depth`,
+`wip-jules-...`) come back on fetch.
+
+**Restore it when you want it:**
+
+```bash
+git remote add upstream https://github.com/solaegis/CharacterMarkdown.git
+git remote set-url --push upstream DISABLED   # optional: fetch-only, so a push cannot reach it by mistake
+git fetch upstream
+```
+
+Remove the `DISABLED` push URL (`git remote set-url --push upstream https://github.com/solaegis/CharacterMarkdown.git`)
+only when you are ready to open the upstream PRs. Commands in this file that say `upstream/main` need the remote back.
+
+**Branch protection on the fork** (`choatej/CharacterMarkdown`): `main` and `integration/all` require a pull request
+(no approval needed, since there is one reviewer) and the `CI result` check to pass, apply to admins too, and forbid force
+pushes and deletion. Changes reach either branch through a PR from a topic branch; CI runs on every PR, whatever its
+base, and after each merge to `main` or `integration/all`. See `gh api repos/choatej/CharacterMarkdown/branches/main/protection`
+for the live settings, and Settings > Branches on GitHub to relax them.
+
 ## Contents
 
+0. [Remotes and branch protection](#remotes-and-branch-protection)
 1. [Why these changes exist](#why-these-changes-exist)
 2. [The branches](#the-branches)
 3. [Merge order and rebuilding this branch](#merge-order-and-rebuilding-this-branch)
@@ -104,7 +133,8 @@ Independent branches first, then the Lua `/cm save` stack in dependency order, t
 - `src/utils/ExportStore.lua`: `structured-data-export` and `save-clear` both add functions at the end; keep both.
   `ExportStore.Clear` removes by format key, so it also clears a `data` export.
 
-**Rebuilding from scratch** (for example after upstream moves):
+**Rebuilding from scratch** (for example after upstream moves; restore the `upstream` remote first, or use the tag
+`upstream-main-ff6908e` as the base while it is removed):
 
 ```bash
 git fetch upstream
@@ -188,7 +218,7 @@ Before sending any branch upstream, run the checks **on that branch's own tip**,
 
 Held until PR #3 has a response. When it does:
 
-1. `git fetch upstream`; check whether `upstream/main` moved from `ff6908e`. Rebase each branch you send onto it.
+1. Restore the `upstream` remote (see above), then `git fetch upstream`; check whether `upstream/main` moved from `ff6908e`. Rebase each branch you send onto it.
 2. Post the proposal issue first (`~/src/pr-drafts/08-issue-save-to-savedvariables.md`).
 3. Order: `fix/settings-merge-fallback`, `fix/antiquities-section-render-errors`, `fix/antiquity-lead-timers`,
    then `feat/save-to-savedvariables`, `feat/sv-export-converter`, `feat/export-format-registry`,
@@ -198,7 +228,8 @@ Held until PR #3 has a response. When it does:
 4. Each change is one squashed commit with a `Co-Authored-By` trailer (stacked branches also contain their
    bases' commits underneath). Every PR after the first needs a trivial CHANGELOG rebase (keep both lines).
 5. `feat/save-clear`, `feat/structured-data-export`, `feat/cmdata-model` and `feat/config-tree` have **no drafts yet**.
-6. Only push to `origin`. The branches do not track `upstream/main`, so a stray `git push` cannot reach it.
+6. Only push to `origin`. The branches do not track `upstream/main`, so a stray `git push` cannot reach it, and with the
+   remote removed there is nothing to reach.
 
 ```bash
 git push origin <branch>
@@ -258,8 +289,10 @@ gh pr create --repo solaegis/CharacterMarkdown --base main --head choatej:<branc
 - [ ] Consider reporting the nested settings copies as an upstream issue
 - [x] First CI run on this fork (done: passes on `integration/all` via draft PR #1)
 - [ ] Fork `main` now differs from `upstream/main` (it has the CI commits); local `main` no longer tracks upstream, so
-      `git fetch upstream` and rebase or reset it before building anything new from `main`
-- [ ] Enable branch protection on the fork's `main` requiring `CI result`, and close draft PR #1 when done with it
+      restore the remote, `git fetch upstream` and rebase or reset it before building anything new from `main`
+- [x] Branch protection on the fork's `main` and `integration/all` requiring a PR and `CI result`
+- [ ] Close draft PR #1 (it only existed to run CI on the integration branch)
+- [ ] Restore the `upstream` remote when it is time to submit (see Remotes and branch protection)
 - [ ] Require the `CI result` check in branch protection on the fork's `main` (and tell the maintainer it is the one to require)
 - [ ] After a formatting-only cleanup of `src/`, remove `continue-on-error` from the StyLua step so it blocks
 - [ ] Move the existing release, docs and mdBook workflows from version tags to commit SHAs like the new workflow
