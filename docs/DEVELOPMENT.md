@@ -229,6 +229,20 @@ task dev:test:python  # Python tool tests only
 The Lua specs in `tests/lua/` run without the game: they load real add-on source files with small
 ESO stubs. See [tests/README.md](../tests/README.md) for how to write one.
 
+### Continuous integration
+`.github/workflows/ci.yaml` runs on every pull request update and on every merge to `main`:
+
+- **Lua jobs** (only when `src/`, the manifest, scripts, lint/format config or the listing files change):
+  Luacheck, manifest/files/syntax validation, ESOUI/changelog/README validation, the offline Lua specs
+  when `tests/lua/` exists, and an advisory StyLua format check (it does not fail the run yet because `src/`
+  has existing formatting differences).
+- **Python jobs** (only when `tools/`, `pyproject.toml`, `data/` or `src/settings/Defaults.lua` change):
+  Ruff on `tools/` and the unit tests on Python 3.10 and 3.13.
+- **`CI result`** is the one check to require in branch protection. It passes when every job that ran
+  passed or was skipped, which a workflow-level `paths:` filter cannot do.
+
+Actions are pinned to a commit SHA with the release tag in a comment; update both together.
+
 For comprehensive testing procedures, see the [Testing Guide](TESTING_COMMAND.md).
 
 ### Pre-Release Checklist
