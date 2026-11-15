@@ -1,0 +1,14 @@
+# Keeps the commit SHAs that the workflows pin their actions to up to date. Dependabot reads the
+# `# vX.Y.Z` comment after each SHA and rewrites both. Only GitHub Actions are covered: the Python
+# tools use the standard library, and the few test dependencies are installed unpinned-by-patch in CI.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns: ["*"]
