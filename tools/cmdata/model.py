@@ -14,9 +14,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .clean import none_if_blank, single_line, strip_decoration, strip_markup
-
-# Topics that have a typed model; everything else goes to `extra`.
-MODELLED_TOPICS = ("character", "stats", "equipment", "skillBar", "cp", "customNotes", "playStyle")
+from .util import get as _get
 
 # Armor weight values used by the game (seen in real exports: gloves of a light set are 1, a medium
 # crafted helm is 2). Other enum values (weapon type, bind type, style) stay numeric on purpose:
@@ -27,16 +25,6 @@ ARMOR_TYPES = {0: "none", 1: "light", 2: "medium", 3: "heavy"}
 # other values are left out until they have been seen with an item name to check them against; an
 # unknown number stays numeric in the JSON and is left out of the Markdown (the item name says it).
 WEAPON_TYPES = {11: "dagger", 15: "lightning staff"}
-
-
-def _get(raw: Any, *path: str, default: Any = None) -> Any:
-    """Nested dict lookup that returns `default` instead of raising."""
-    value = raw
-    for key in path:
-        if not isinstance(value, dict) or key not in value:
-            return default
-        value = value[key]
-    return value
 
 
 # --------------------------------------------------------------------------- character
@@ -373,55 +361,4 @@ class ChampionPoints:
             spent=raw.get("spent"),
             unspent=raw.get("available"),
             disciplines=disciplines,
-        )
-
-
-# --------------------------------------------------------------------------- the export
-
-
-@dataclass
-class CharacterExport:
-    """One character's structured export plus the context it was saved with."""
-
-    character: Character
-    stats: Stats | None = None
-    equipment: Equipment | None = None
-    skill_bars: SkillBars | None = None
-    champion_points: ChampionPoints | None = None
-    # free text the player wrote for the AI (settings: Build Notes, Play Style)
-    build_notes: str | None = None
-    play_style: str | None = None
-    exported_at: int | None = None
-    meta: dict[str, Any] = field(default_factory=dict)
-    report: dict[str, Any] = field(default_factory=dict)
-    # every topic without a typed model, exactly as the game gave it
-    extra: dict[str, Any] = field(default_factory=dict)
-
-    @classmethod
-    def from_document(cls, document: dict[str, Any]) -> CharacterExport:
-        """Build from the JSON that ``tools.sv_export`` writes for ``/cm save data``.
-
-        A bare data table (the value of the document's ``data`` key) is accepted too.
-        """
-        data = document["data"] if isinstance(document.get("data"), dict) else document
-        character_raw = data.get("character")
-        if not isinstance(character_raw, dict):
-            raise ValueError("this export has no 'character' topic (is it a /cm save data export?)")
-
-        def typed(topic: str, builder: Any) -> Any:
-            raw = data.get(topic)
-            return builder(raw) if isinstance(raw, dict) and raw else None
-
-        return cls(
-            character=Character.from_raw(character_raw),
-            stats=typed("stats", Stats.from_raw),
-            equipment=typed("equipment", Equipment.from_raw),
-            skill_bars=typed("skillBar", SkillBars.from_raw),
-            champion_points=typed("cp", ChampionPoints.from_raw),
-            build_notes=none_if_blank(data.get("customNotes")),
-            play_style=none_if_blank(data.get("playStyle")),
-            exported_at=document.get("exported") if "data" in document else None,
-            meta=dict(document.get("meta") or {}) if "data" in document else {},
-            report=dict(document.get("report") or {}) if "data" in document else {},
-            extra={k: v for k, v in data.items() if k not in MODELLED_TOPICS},
         )

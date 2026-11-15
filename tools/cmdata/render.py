@@ -8,10 +8,14 @@ Add another format by writing another function that takes a ``CharacterExport``.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import asdict
 from typing import Any
 
-from .model import CharacterExport
+from .export import CharacterExport
+from .lean_topics import EXTRA_SECTIONS
+from .util import fmt_duration as _duration
+from .util import fmt_number as _n
 
 # --------------------------------------------------------------------------- dict / JSON
 
@@ -48,23 +52,17 @@ def to_json(export: CharacterExport, *, include_extra: bool = True, indent: int 
 # --------------------------------------------------------------------------- lean Markdown
 
 
-def _n(value: Any) -> str:
-    """Number with thousands separators; anything else as text; missing as '?'."""
-    if isinstance(value, bool) or value is None:
-        return "?"
-    if isinstance(value, int):
-        return f"{value:,}"
-    if isinstance(value, float):
-        return f"{value:,.1f}".rstrip("0").rstrip(".")
-    return str(value)
-
-
-def _duration(seconds: int | None) -> str | None:
-    if not isinstance(seconds, int) or seconds <= 0:
+def _curses(export: CharacterExport) -> str | None:
+    """'Vampire stage 1' / 'Werewolf' when the character is currently cursed."""
+    p = export.progression
+    if p is None:
         return None
-    days, rest = divmod(seconds, 86400)
-    hours = rest // 3600
-    return f"{days}d {hours}h" if days else f"{hours}h"
+    found = []
+    if p.vampire_status == "active":
+        found.append(f"Vampire stage {p.vampire_stage}" if p.vampire_stage else "Vampire")
+    if p.werewolf_status == "active":
+        found.append("Werewolf")
+    return ", ".join(found) or None
 
 
 def _identity_lines(export: CharacterExport) -> list[str]:
@@ -83,6 +81,10 @@ def _identity_lines(export: CharacterExport) -> list[str]:
         f"Title: {c.title}" if c.title else None,
         f"Played: {_duration(c.played_seconds)}" if _duration(c.played_seconds) else None,
         "ESO Plus" if c.eso_plus else None,
+        f"Mundus: {', '.join(export.mundus.names)}"
+        if export.mundus and export.mundus.names
+        else None,
+        _curses(export),
         f"Play style: {export.play_style.replace('_', ' ')}" if export.play_style else None,
     ]
     if any(extras):
@@ -208,16 +210,33 @@ def _cp_lines(export: CharacterExport) -> list[str]:
     return lines
 
 
-def to_lean_markdown(export: CharacterExport) -> str:
-    """Compact text for the modelled topics. Topics without a model are not included."""
-    lines = (
-        _identity_lines(export)
-        + _notes_lines(export)
-        + _stats_lines(export)
-        + _gear_lines(export)
-        + _skill_lines(export)
-        + _cp_lines(export)
-    )
+# The sections that describe the build; this is what to_lean_markdown prints by default.
+BUILD_SECTIONS = {
+    "notes": _notes_lines,
+    "stats": _stats_lines,
+    "gear": _gear_lines,
+    "skill_bars": _skill_lines,
+    "champion_points": _cp_lines,
+}
+DEFAULT_SECTIONS = tuple(BUILD_SECTIONS)
+# every section, in the order they are printed
+ALL_SECTIONS = {**BUILD_SECTIONS, **EXTRA_SECTIONS}
+
+
+def to_lean_markdown(export: CharacterExport, sections: Iterable[str] | None = None) -> str:
+    """Compact text for a person or a language model.
+
+    The identity header is always printed. ``sections`` picks the rest by name (see
+    ``ALL_SECTIONS``); by default only the build sections are printed, which keeps the text small.
+    """
+    wanted = set(DEFAULT_SECTIONS if sections is None else sections)
+    unknown = wanted - set(ALL_SECTIONS)
+    if unknown:
+        raise ValueError(f"unknown section(s): {', '.join(sorted(unknown))}")
+    lines = _identity_lines(export)
+    for name, build in ALL_SECTIONS.items():
+        if name in wanted:
+            lines += build(export)
     return "\n".join(lines) + "\n"
 
 

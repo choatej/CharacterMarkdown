@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .model import CharacterExport
+from .export import CharacterExport
 from .render import FORMATS, to_dict, to_json, to_lean_markdown
 
 __all__ = [

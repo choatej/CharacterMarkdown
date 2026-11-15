@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Structured export model**: `python3 -m tools.cmdata` reads a structured export (the JSON from `tools.sv_export`) into typed Python objects for character, stats, equipment, skill bars and champion points, with other topics passed through unchanged, and writes it as cleaned JSON or compact Markdown (colour codes and emoji removed)
+- **Structured export model**: `python3 -m tools.cmdata` reads a structured export (the JSON from `tools.sv_export`) into typed Python objects for every collected topic (character, stats, equipment, skills, champion points, antiquities, crafting, inventory, collectibles, quests, world progress and more), stores repeated data once, and writes it as cleaned JSON or compact Markdown (colour codes, emoji, ids and unnamed numbers removed); `--topics` picks which Markdown sections to print, for example only the antiquity leads expiring within a week
 - **Optional libraries**: LibChatMessage (chat pipeline), LibAsync (frame-yielding inventory/achievements collection), LibCustomIcons (formalized optional dep + integration helper)
 - **AI / Build Coach export**: `/cm coach` (aliases `ai`, `build-coach`; `/markdown` is an alias for `/cm`) emits a compact paste schema (identity, bars, sets, collectibles, CP, notes, gaps) for ChatGPT/Claude; LAM **Preset: AI / Build Coach** for lean normal exports
 - **Build Coach Collectibles**: `/cm coach` includes active mount/costume/pet/personality plus owned mounts, pets, and costumes; Appearance API reports active vanity pet; AI / Build Coach preset enables `includeCollectibles`, `showCollectiblesDetailed`, and `includeAppearance`

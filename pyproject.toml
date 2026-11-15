@@ -30,6 +30,8 @@ ignore = []
 "tools/setdb/*" = ["T20"]
 # Command-line entry point: output goes to stdout/stderr by design
 "tools/cmdata/__main__.py" = ["T20"]
+# Test fixtures mirror the export's shape and read better unwrapped
+"tools/cmdata/test_*.py" = ["E501"]
 # Regex grammar and verbatim in-game bonus text don't wrap readably
 "tools/setdb/normalize.py" = ["T20", "E501"]
 "tools/setdb/support.py" = ["T20", "E501"]

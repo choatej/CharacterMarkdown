@@ -159,9 +159,9 @@ DATA = {
     },
     "customNotes": "Solo trials. Wants more sustain.",
     "playStyle": "solo_self_sufficient",
-    # topics without a typed model
-    "antiquities": {"summary": {"activeLeads": 2}},
-    "currency": {"gold": 5},
+    # topics this version has no model for (a newer add-on may add more)
+    "someFutureTopic": {"value": 1},
+    "anotherFutureTopic": {"gold": 5},
 }
 
 DOCUMENT = {
@@ -284,8 +284,8 @@ class ModelTest(unittest.TestCase):
         )
 
     def test_other_topics_pass_through(self) -> None:
-        self.assertEqual(set(self.export.extra), {"antiquities", "currency"})
-        self.assertEqual(self.export.extra["currency"], {"gold": 5})
+        self.assertEqual(set(self.export.extra), {"someFutureTopic", "anotherFutureTopic"})
+        self.assertEqual(self.export.extra["anotherFutureTopic"], {"gold": 5})
         self.assertEqual(self.export.exported_at, 1760000000)
         self.assertEqual(self.export.meta["addonVersion"], "test")
 
@@ -328,7 +328,7 @@ class RenderTest(unittest.TestCase):
     def test_json_round_trips(self) -> None:
         loaded = json.loads(to_json(self.export))
         self.assertEqual(loaded["character"]["name"], "Test Character")
-        self.assertEqual(loaded["extra"]["currency"], {"gold": 5})
+        self.assertEqual(loaded["extra"]["anotherFutureTopic"], {"gold": 5})
 
     def test_lean_markdown(self) -> None:
         text = to_lean_markdown(self.export)

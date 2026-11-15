@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from . import FORMATS, load_export
+from .render import ALL_SECTIONS, DEFAULT_SECTIONS, to_lean_markdown
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -19,6 +20,12 @@ def main(argv: list[str] | None = None) -> int:
         "--format", default="md", choices=sorted(FORMATS), help="output format (default: md)"
     )
     parser.add_argument("--out", help="write to this file instead of standard output")
+    parser.add_argument(
+        "--topics",
+        help="md only: comma-separated sections to include, or 'all' "
+        f"(default: {','.join(DEFAULT_SECTIONS)}; others: "
+        f"{','.join(s for s in ALL_SECTIONS if s not in DEFAULT_SECTIONS)})",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -27,7 +34,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {err}", file=sys.stderr)
         return 1
 
-    text = FORMATS[args.format](export)
+    try:
+        if args.format == "md" and args.topics:
+            names = list(ALL_SECTIONS) if args.topics == "all" else args.topics.split(",")
+            text = to_lean_markdown(export, [n.strip() for n in names])
+        else:
+            text = FORMATS[args.format](export)
+    except ValueError as err:
+        print(f"error: {err}", file=sys.stderr)
+        return 1
     if args.out:
         Path(args.out).expanduser().write_text(text, encoding="utf-8", newline="")
         print(f"Wrote {args.out} ({len(text.encode('utf-8')):,} bytes)", file=sys.stderr)
