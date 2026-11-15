@@ -104,6 +104,7 @@ src/generators/helpers/Utilities.lua
 
 ## Section generators (modular markdown generation)
 src/generators/sections/Achievements.lua
+src/generators/AchievementProgress.lua
 src/generators/sections/Antiquities.lua
 src/generators/sections/Economy.lua
 src/generators/sections/Character.lua
