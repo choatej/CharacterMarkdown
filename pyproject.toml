@@ -34,6 +34,8 @@ ignore = []
 # Test fixtures mirror the export's shape and read better unwrapped
 "tools/cmdata/test_*.py" = ["E501"]
 "tools/cmconfig/test_*.py" = ["E501"]
+# Command-line tool: it reports what it wrote on stdout and problems on stderr by design
+"tools/sv_export.py" = ["T20"]
 # Regex grammar and verbatim in-game bonus text don't wrap readably
 "tools/setdb/normalize.py" = ["T20", "E501"]
 "tools/setdb/support.py" = ["T20", "E501"]
