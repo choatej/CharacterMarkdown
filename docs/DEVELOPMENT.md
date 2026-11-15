@@ -221,8 +221,13 @@ task install:live    # Copy to ESO
 ```bash
 task lint           # Luacheck
 task validate       # Manifest + structure
-task test           # All checks
+task test           # All checks, including the Lua specs and Python tests below
+task dev:test:lua   # Offline Lua specs only (LuaJIT); add `-- defaults` to run one spec
+task dev:test:python  # Python tool tests only
 ```
+
+The Lua specs in `tests/lua/` run without the game: they load real add-on source files with small
+ESO stubs. See [tests/README.md](../tests/README.md) for how to write one.
 
 For comprehensive testing procedures, see the [Testing Guide](TESTING_COMMAND.md).
 
