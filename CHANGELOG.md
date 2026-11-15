@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Offline Lua tests**: `task dev:test:lua` runs specs from `tests/lua/` under LuaJIT with small ESO stubs (a minimal runner, no dependencies); the first specs check that every file in the manifest compiles as Lua 5.1 and that the settings defaults are well formed. `task test` now runs them and the Python tool tests
 - **Structured export model**: `python3 -m tools.cmdata` reads a structured export (the JSON from `tools.sv_export`) into typed Python objects for every collected topic (character, stats, equipment, skills, champion points, antiquities, crafting, inventory, collectibles, quests, world progress and more), stores repeated data once, and writes it as cleaned JSON or compact Markdown (colour codes, emoji, ids and unnamed numbers removed); `--topics` picks which Markdown sections to print, for example only the antiquity leads expiring within a week
 - **Optional libraries**: LibChatMessage (chat pipeline), LibAsync (frame-yielding inventory/achievements collection), LibCustomIcons (formalized optional dep + integration helper)
 - **AI / Build Coach export**: `/cm coach` (aliases `ai`, `build-coach`; `/markdown` is an alias for `/cm`) emits a compact paste schema (identity, bars, sets, collectibles, CP, notes, gaps) for ChatGPT/Claude; LAM **Preset: AI / Build Coach** for lean normal exports

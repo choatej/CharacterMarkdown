@@ -201,10 +201,25 @@ tasks:
     silent: true
 
   test:
-    desc: Run all tests (lint + validate)
-    deps: [lint, validate]
+    desc: Run all tests (lint + validate + Lua specs + Python tests)
+    deps: [lint, validate, test:lua, test:python]
     cmds:
       - echo "✅ All tests passed"
+    silent: true
+
+  test:lua:
+    desc: "Run the offline Lua specs in tests/lua (LuaJIT). Optional filter: -- <spec name>"
+    cmds:
+      - |
+        command -v luajit >/dev/null || { echo "❌ LuaJIT not found (task install:deps)"; exit 1; }
+        luajit tests/lua/run.lua {{.CLI_ARGS}}
+      - luacheck tests/lua --config tests/lua/.luacheckrc
+    silent: true
+
+  test:python:
+    desc: Run the Python tool tests (tools/*, standard library only; set DB tests that need extras skip)
+    cmds:
+      - python3 -m unittest discover -s tools -t . -p "test_*.py"
     silent: true
 
   backup:
