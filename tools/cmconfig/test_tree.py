@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import random
 import tempfile
 import unittest
 from pathlib import Path
@@ -222,6 +223,89 @@ class SelectionTests(unittest.TestCase):
         self.assertIn("[-] a: A", text)
         self.assertIn("    [x] c: C  (detail)", text)
         self.assertIn("    [ ] d: D", text)
+
+
+class ResolveTests(unittest.TestCase):
+    """resolve() is the top-down pass runtime code reads; it must agree with is_effective()."""
+
+    SEEDS = range(200)
+
+    def random_data(self, tree: ConfigCollection, rng: random.Random, p_on: float) -> ConfigData:
+        return ConfigData(tree, {i.path: rng.random() < p_on for i in tree.items()})
+
+    def assert_matches_is_effective(self, tree: ConfigCollection, data: ConfigData, label: str) -> None:
+        resolved = tree.resolve(data)
+        for item in tree.items():
+            self.assertEqual(resolved[item.path], item.is_effective(data), f"{label}: {item.path}")
+
+    def test_matches_is_effective_on_random_toggles_for_both_trees(self) -> None:
+        trees = {"small": small(), "real": ConfigCollection.load(DEFAULT_TREE)}
+        for name, tree in trees.items():
+            for seed in self.SEEDS:
+                rng = random.Random(seed)
+                for p_on in (0.1, 0.5, 0.9):
+                    self.assert_matches_is_effective(tree, self.random_data(tree, rng, p_on), f"{name} seed {seed} p={p_on}")
+
+    def test_matches_after_random_edits_cascades_and_selects(self) -> None:
+        tree = ConfigCollection.load(DEFAULT_TREE).with_defaults(read_lua_defaults())
+        items = list(tree.items())
+        for seed in self.SEEDS:
+            rng = random.Random(seed)
+            data = ConfigData(tree)
+            for _ in range(20):
+                item = rng.choice(items)
+                action = rng.choice(("set_on", "set_off", "cascade_on", "cascade_off", "select"))
+                if action == "set_on":
+                    data.set(item, True)
+                elif action == "set_off":
+                    data.set(item, False)
+                elif action == "select":
+                    item.select(data)
+                else:
+                    item.cascade(data, action == "cascade_on")
+                self.assert_matches_is_effective(tree, data, f"seed {seed} after {action} {item.path}")
+
+    def test_every_item_is_resolved(self) -> None:
+        tree = ConfigCollection.load(DEFAULT_TREE)
+        resolved = tree.resolve(ConfigData(tree))
+        self.assertEqual(set(resolved), {i.path for i in tree.items()})
+        self.assertTrue(all(isinstance(v, bool) for v in resolved.values()))
+
+    def test_closing_a_gate_closes_everything_below_it(self) -> None:
+        tree = ConfigCollection.load(DEFAULT_TREE)
+        data = ConfigData(tree)
+        data.set("crafting.knowledge", False)
+        resolved = tree.resolve(data)
+        below = [i.path for i in tree["crafting.knowledge"].walk()]
+        self.assertFalse(any(resolved[p] for p in below))
+        self.assertTrue(resolved["crafting"])  # the gate above stays open
+        self.assertTrue(data.get("crafting.knowledge.recipes"))  # the stored toggle is untouched
+
+    def test_snapshot_is_read_only_and_does_not_follow_later_edits(self) -> None:
+        tree = small()
+        data = ConfigData(tree)
+        before = tree.resolve(data)
+        with self.assertRaises(TypeError):
+            before["a"] = False  # type: ignore[index]
+        data.set("a", False)
+        self.assertTrue(before["a.b"])  # the old snapshot is unchanged
+        self.assertFalse(tree.resolve(data)["a.b"])  # a new snapshot sees the edit
+
+    def test_legacy_flags_and_topics_are_built_from_the_snapshot(self) -> None:
+        tree = ConfigCollection.load(DEFAULT_TREE)
+        for seed in range(50):
+            data = self.random_data(tree, random.Random(seed), 0.5)
+            resolved = tree.resolve(data)
+            flags = tree.legacy_settings(data)
+            for key, value in flags.items():
+                self.assertEqual(value, resolved[tree.by_setting(key).path], key)  # type: ignore[union-attr]
+            expected = {
+                t.split(".")[0]
+                for i in tree.items()
+                if i.domain == "content" and i.is_effective(data)
+                for t in i.topics
+            }
+            self.assertEqual(tree.topics_for(data), expected, f"seed {seed}")
 
 
 class RealTreeTests(unittest.TestCase):

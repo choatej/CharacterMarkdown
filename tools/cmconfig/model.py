@@ -16,9 +16,10 @@ Semantics:
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 KINDS = ("item", "detail")
@@ -311,11 +312,27 @@ class ConfigCollection:
 
         Uses the effective value: an item below an off ancestor is off.
         """
-        flags: dict[str, bool] = {}
-        for item in self.items():
-            for key in item.settings:
-                flags[key] = item.is_effective(data)
-        return flags
+        resolved = self.resolve(data)
+        return {key: resolved[item.path] for item in self.items() for key in item.settings}
+
+    def resolve(self, data: ConfigData) -> Mapping[str, bool]:
+        """Every item's effective value, worked out top-down in one pass.
+
+        ``effective[item] = toggle[item] and effective[parent]``: each item is visited once and
+        never looks up at its ancestors. The result is a read-only snapshot, kept in memory and
+        never saved; take a new one after any edit. Runtime code reads ``resolved[path]``.
+        """
+        resolved: dict[str, bool] = {}
+
+        def visit(item: ConfigItem, parent_open: bool) -> None:
+            effective = parent_open and data.get(item)
+            resolved[item.path] = effective
+            for child in item.children:
+                visit(child, effective)
+
+        for section in self.sections:
+            visit(section, True)
+        return MappingProxyType(resolved)
 
     # ---- selection by path -----------------------------------------------------------------
 
@@ -344,10 +361,11 @@ class ConfigCollection:
 
     def topics_for(self, data: ConfigData, domain: str | None = "content") -> set[str]:
         """Top-level export topics fed by at least one effective item."""
+        resolved = self.resolve(data)
         return {
             t.split(".")[0]
             for item in self.items()
-            if (domain is None or item.domain == domain) and item.is_effective(data)
+            if (domain is None or item.domain == domain) and resolved[item.path]
             for t in item.topics
         }
 

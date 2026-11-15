@@ -29,6 +29,12 @@ python3 -m tools.cmconfig.test_tree       # checks (also part of `task dev:test:
 
 - A node is **effective** when it and every ancestor are on. A child's stored value survives its parent
   being switched off, so switching the parent back on restores it.
+- Think of nodes as gates: a node's stored value opens or closes its own gate and never touches the
+  gates below it. Setting a parent does not change its children; `cascade` is the explicit bulk action.
+- **Store the toggle, derive the effective value.** `resolve(data)` works every node's effective value
+  out top-down in one pass (`effective = toggle and parent's effective`) and returns a read-only
+  snapshot. Runtime code reads `resolved[path]`. The snapshot lives in memory only, never in
+  SavedVariables (a saved copy could go stale), and is rebuilt after any edit.
 - A node's **state** is `on`, `off`, or `mixed` (on, with something under it not effective).
 - **Domains**: `content` (what the data contains), `profile` (the player's own text) and `format` (how
   the Markdown renderer lays it out; a data export has no use for these). Child nodes inherit their
