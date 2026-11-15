@@ -32,7 +32,12 @@ SMALL = {
                 {"id": "e", "label": "E", "settings": ["includeE"], "topics": ["eee"]},
             ],
         },
-        {"id": "f", "label": "F", "domain": "format", "children": [{"id": "g", "label": "G", "settings": ["x"]}]},
+        {
+            "id": "f",
+            "label": "F",
+            "domain": "format",
+            "children": [{"id": "g", "label": "G", "settings": ["x"]}],
+        },
     ],
 }
 
@@ -49,7 +54,9 @@ class StructureTests(unittest.TestCase):
         self.tree = small()
 
     def test_paths_and_lookup(self) -> None:
-        self.assertEqual([i.path for i in self.tree.items()], ["a", "a.b", "a.b.c", "a.b.d", "a.e", "f", "f.g"])
+        self.assertEqual(
+            [i.path for i in self.tree.items()], ["a", "a.b", "a.b.c", "a.b.d", "a.e", "f", "f.g"]
+        )
         self.assertEqual(self.tree["a.b.c"].label, "C")
         self.assertIn("a.e", self.tree)
         self.assertEqual(len(self.tree), 7)
@@ -68,7 +75,9 @@ class StructureTests(unittest.TestCase):
     def test_ancestors_descendants_depth(self) -> None:
         c = self.tree["a.b.c"]
         self.assertEqual([a.path for a in c.ancestors()], ["a.b", "a"])
-        self.assertEqual([d.path for d in self.tree["a"].descendants()], ["a.b", "a.b.c", "a.b.d", "a.e"])
+        self.assertEqual(
+            [d.path for d in self.tree["a"].descendants()], ["a.b", "a.b.c", "a.b.d", "a.e"]
+        )
         self.assertEqual((self.tree["a"].depth, c.depth), (0, 2))
 
     def test_domain_is_inherited_and_kind_defaults_to_item(self) -> None:
@@ -126,14 +135,18 @@ class ValueTests(unittest.TestCase):
 
     def test_cascade_applies_to_the_whole_subtree(self) -> None:
         self.tree["a.b"].cascade(self.data, False)
-        self.assertEqual([i.path for i in self.tree.items() if not self.data.get(i)], ["a.b", "a.b.c", "a.b.d"])
+        self.assertEqual(
+            [i.path for i in self.tree.items() if not self.data.get(i)], ["a.b", "a.b.c", "a.b.d"]
+        )
         self.tree["a"].cascade(self.data, True)
         self.assertTrue(all(self.data.get(i) for i in self.tree["a"].walk()))
 
     def test_select_turns_on_the_item_its_subtree_and_its_ancestors(self) -> None:
         data = ConfigData(self.tree, {i.path: False for i in self.tree.items()})
         self.tree["a.b"].select(data)
-        self.assertEqual(sorted(p for p, v in data.values.items() if v), ["a", "a.b", "a.b.c", "a.b.d"])
+        self.assertEqual(
+            sorted(p for p, v in data.values.items() if v), ["a", "a.b", "a.b.c", "a.b.d"]
+        )
 
     def test_saved_form_holds_only_changes_and_survives_old_paths(self) -> None:
         self.data.set("a.e", False)
@@ -153,16 +166,30 @@ class MigrationTests(unittest.TestCase):
         self.tree = small()
 
     def test_legacy_values_land_on_their_items(self) -> None:
-        data = self.tree.data_from_legacy({"includeB": True, "showC": False, "includeE": False, "x": True})
+        data = self.tree.data_from_legacy(
+            {"includeB": True, "showC": False, "includeE": False, "x": True}
+        )
         self.assertEqual(
             dict(data.values),
-            {"a": True, "a.b": True, "a.b.c": False, "a.b.d": True, "a.e": False, "f": True, "f.g": True},
+            {
+                "a": True,
+                "a.b": True,
+                "a.b.c": False,
+                "a.b.d": True,
+                "a.e": False,
+                "f": True,
+                "f.g": True,
+            },
         )
 
     def test_group_without_setting_is_on_when_any_child_is(self) -> None:
-        data = self.tree.data_from_legacy({"includeB": False, "showC": False, "includeE": False, "x": False})
+        data = self.tree.data_from_legacy(
+            {"includeB": False, "showC": False, "includeE": False, "x": False}
+        )
         self.assertFalse(data.get("a"))
-        data = self.tree.data_from_legacy({"includeB": False, "showC": False, "includeE": True, "x": False})
+        data = self.tree.data_from_legacy(
+            {"includeB": False, "showC": False, "includeE": True, "x": False}
+        )
         self.assertTrue(data.get("a"))
 
     def test_leaf_without_setting_follows_its_parent(self) -> None:
@@ -172,7 +199,9 @@ class MigrationTests(unittest.TestCase):
         self.assertTrue(on.get("a.b.d"))
 
     def test_back_to_legacy_flags_uses_effective_values(self) -> None:
-        data = self.tree.data_from_legacy({"includeB": False, "showC": True, "includeE": True, "x": True})
+        data = self.tree.data_from_legacy(
+            {"includeB": False, "showC": True, "includeE": True, "x": True}
+        )
         self.assertEqual(
             self.tree.legacy_settings(data),
             {"includeB": False, "showC": False, "includeE": True, "x": True},
@@ -199,7 +228,9 @@ class SelectionTests(unittest.TestCase):
 
     def test_selected_paths_is_the_shortest_cover(self) -> None:
         self.assertEqual(self.tree.selected_paths(self.tree.from_paths(["a.b", "a.e"])), ["a"])
-        self.assertEqual(self.tree.selected_paths(self.tree.from_paths(["a.b.c", "a.e"])), ["a.b.c", "a.e"])
+        self.assertEqual(
+            self.tree.selected_paths(self.tree.from_paths(["a.b.c", "a.e"])), ["a.b.c", "a.e"]
+        )
         self.assertEqual(self.tree.selected_paths(self.tree.from_paths([])), [])
 
     def test_paths_round_trip(self) -> None:
@@ -233,7 +264,9 @@ class ResolveTests(unittest.TestCase):
     def random_data(self, tree: ConfigCollection, rng: random.Random, p_on: float) -> ConfigData:
         return ConfigData(tree, {i.path: rng.random() < p_on for i in tree.items()})
 
-    def assert_matches_is_effective(self, tree: ConfigCollection, data: ConfigData, label: str) -> None:
+    def assert_matches_is_effective(
+        self, tree: ConfigCollection, data: ConfigData, label: str
+    ) -> None:
         resolved = tree.resolve(data)
         for item in tree.items():
             self.assertEqual(resolved[item.path], item.is_effective(data), f"{label}: {item.path}")
@@ -244,7 +277,9 @@ class ResolveTests(unittest.TestCase):
             for seed in self.SEEDS:
                 rng = random.Random(seed)
                 for p_on in (0.1, 0.5, 0.9):
-                    self.assert_matches_is_effective(tree, self.random_data(tree, rng, p_on), f"{name} seed {seed} p={p_on}")
+                    self.assert_matches_is_effective(
+                        tree, self.random_data(tree, rng, p_on), f"{name} seed {seed} p={p_on}"
+                    )
 
     def test_matches_after_random_edits_cascades_and_selects(self) -> None:
         tree = ConfigCollection.load(DEFAULT_TREE).with_defaults(read_lua_defaults())
@@ -263,7 +298,9 @@ class ResolveTests(unittest.TestCase):
                     item.select(data)
                 else:
                     item.cascade(data, action == "cascade_on")
-                self.assert_matches_is_effective(tree, data, f"seed {seed} after {action} {item.path}")
+                self.assert_matches_is_effective(
+                    tree, data, f"seed {seed} after {action} {item.path}"
+                )
 
     def test_every_item_is_resolved(self) -> None:
         tree = ConfigCollection.load(DEFAULT_TREE)
@@ -318,8 +355,12 @@ class RealTreeTests(unittest.TestCase):
 
     def test_every_boolean_setting_has_one_item(self) -> None:
         booleans = {k for k, v in self.defaults.items() if isinstance(v, bool)}
-        self.assertEqual(booleans - self.tree.settings(), set(), "settings with no place in the tree")
-        self.assertEqual(self.tree.settings() - set(self.defaults), set(), "tree names an unknown setting")
+        self.assertEqual(
+            booleans - self.tree.settings(), set(), "settings with no place in the tree"
+        )
+        self.assertEqual(
+            self.tree.settings() - set(self.defaults), set(), "tree names an unknown setting"
+        )
 
     def test_settings_left_out_are_explained(self) -> None:
         left_out = {k for k in self.defaults if k not in self.tree.settings()}
@@ -328,7 +369,9 @@ class RealTreeTests(unittest.TestCase):
     def test_every_export_topic_is_claimed(self) -> None:
         known = {*TOPICS, *OTHER_MODELLED, *DERIVED_TOPICS}
         self.assertEqual(known - self.tree.topics(), set(), "topics no item feeds")
-        self.assertEqual(self.tree.topics() - known, set(), "items name a topic the export does not have")
+        self.assertEqual(
+            self.tree.topics() - known, set(), "items name a topic the export does not have"
+        )
 
     def test_top_level_topics_are_fed_by_content_or_profile_items(self) -> None:
         for topic in self.tree.topics():
