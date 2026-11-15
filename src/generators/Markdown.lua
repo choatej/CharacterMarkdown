@@ -1068,6 +1068,10 @@ local function CollectBaseData(settings, Need, MaybeCollect)
         customNotes = (CM.charData and CM.charData.customNotes)
             or (CharacterMarkdownData and CharacterMarkdownData.customNotes)
             or "",
+        -- The player's own text for the AI (settings: Custom Title, Play Style); the build-coach
+        -- export reads the same fields, and the structured data export needs them too.
+        customTitle = (CM.charData and CM.charData.customTitle) or "",
+        playStyle = (CM.charData and CM.charData.playStyle) or "",
     }
 end
 
@@ -1384,12 +1388,17 @@ local function CollectHeavySync(collectedData, heavySteps)
     end
 end
 
-local function GenerateMarkdown()
+--- Run the collectors that the current settings need and return everything they gathered.
+-- This is the first half of GenerateMarkdown; the Markdown is built from this table, and other
+-- outputs (for example the structured data export) can use it without going through Markdown.
+-- @return table|nil collectedData keyed by topic (character, equipment, skill, cp, ...), nil on error
+-- @return table|string settings used for collection, or the error message when nil is returned
+local function CollectData()
     ResetCollectionErrors()
 
     local ready, errMsg = ValidateCollectorsReady()
     if not ready then
-        return errMsg
+        return nil, errMsg
     end
 
     local settings = CM.GetSettings() or {}
@@ -1402,7 +1411,16 @@ local function GenerateMarkdown()
     CollectHeavySync(collectedData, heavySteps)
     FinalizeCollectedData(collectedData)
 
-    return AssembleMarkdown(settings, collectedData)
+    return collectedData, settings
+end
+
+local function GenerateMarkdown()
+    local collectedData, settingsOrError = CollectData()
+    if not collectedData then
+        return settingsOrError
+    end
+
+    return AssembleMarkdown(settingsOrError, collectedData)
 end
 
 --- Async generation: yields between inventory and achievements when LibAsync is installed.
@@ -1612,6 +1630,7 @@ end
 -- =====================================================
 
 CM.generators.GenerateMarkdown = GenerateMarkdown
+CM.generators.CollectData = CollectData
 CM.generators.GenerateMarkdownAsync = GenerateMarkdownAsync
 CM.generators.GenerateBuildCoach = GenerateBuildCoach
 CM.generators.CollectBuildCoachData = CollectBuildCoachData
