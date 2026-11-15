@@ -155,7 +155,7 @@ class MigrationTests(unittest.TestCase):
     def test_legacy_values_land_on_their_items(self) -> None:
         data = self.tree.data_from_legacy({"includeB": True, "showC": False, "includeE": False, "x": True})
         self.assertEqual(
-            {p: v for p, v in data.values.items()},
+            dict(data.values),
             {"a": True, "a.b": True, "a.b.c": False, "a.b.d": True, "a.e": False, "f": True, "f.g": True},
         )
 
