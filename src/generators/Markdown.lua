@@ -1068,6 +1068,10 @@ local function CollectBaseData(settings, Need, MaybeCollect)
         customNotes = (CM.charData and CM.charData.customNotes)
             or (CharacterMarkdownData and CharacterMarkdownData.customNotes)
             or "",
+        -- The player's own text for the AI (settings: Custom Title, Play Style); the build-coach
+        -- export reads the same fields, and the structured data export needs them too.
+        customTitle = (CM.charData and CM.charData.customTitle) or "",
+        playStyle = (CM.charData and CM.charData.playStyle) or "",
     }
 end
 
