@@ -140,7 +140,11 @@ its published SHA-256) and run as `ruff check tools`. It is clean at ruff 0.17.5
 job picks the toolchain: Lua checks (Luacheck, manifest/files/syntax, ESOUI, changelog, README, the offline specs, and an
 advisory StyLua check) when Lua-side files change; Python checks (Ruff, unit tests on 3.10 and 3.13) when Python-side files
 change. `CI result` is the one check to require in branch protection. Every action is pinned to a commit SHA with the
-release tag in a comment. CI has not run on GitHub yet; locally every command in it was run and `actionlint` passes.
+release tag in a comment. It runs on this fork: `main` carries the workflow, and `integration/all` is checked through the
+fork-internal draft PR #1 (`choatej/CharacterMarkdown`, base `main`; never merge it, and it is not an upstream PR).
+The first run found that `luajit -bl` fails on the LuaJIT build CI installs (no `jit.*` modules); `task dev:validate:syntax`
+now uses `scripts/check-lua-syntax.lua`. A passing run on the integration branch: Luacheck clean, all validators,
+13 Lua specs, Ruff, and the unit tests on Python 3.10 and 3.13; the advisory StyLua step lists the 10 existing files.
 
 | Check | Command | Expected now |
 |-------|---------|--------------|
@@ -252,8 +256,10 @@ gh pr create --repo solaegis/CharacterMarkdown --base main --head choatej:<branc
 - [ ] Write PR drafts for `save-clear`, `structured-data-export`, `cmdata-model` and the test framework
 - [ ] Open the small upstream PR for the `install:live` / `install:pts` Linux bug
 - [ ] Consider reporting the nested settings copies as an upstream issue
-- [ ] Watch the first CI run on GitHub for this fork and fix anything the local run could not show (LuaJIT build
-      time on the runner, the `luarocks install luacheck` step, the StyLua action's argument handling)
+- [x] First CI run on this fork (done: passes on `integration/all` via draft PR #1)
+- [ ] Fork `main` now differs from `upstream/main` (it has the CI commits); local `main` no longer tracks upstream, so
+      `git fetch upstream` and rebase or reset it before building anything new from `main`
+- [ ] Enable branch protection on the fork's `main` requiring `CI result`, and close draft PR #1 when done with it
 - [ ] Require the `CI result` check in branch protection on the fork's `main` (and tell the maintainer it is the one to require)
 - [ ] After a formatting-only cleanup of `src/`, remove `continue-on-error` from the StyLua step so it blocks
 - [ ] Move the existing release, docs and mdBook workflows from version tags to commit SHAs like the new workflow
