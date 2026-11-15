@@ -1,0 +1,181 @@
+name: CI
+
+# Runs the checks a pull request should pass, on every PR update and on every merge to main.
+#
+# Lua checks run only when Lua-side files change, Python checks only when Python-side files change.
+# The filtering is done per job (not with a workflow-level `paths:` filter) so the "CI result" job
+# always reports. Make "CI result" the one required status check: a skipped job counts as passing,
+# while a workflow that never started would leave a required check pending forever.
+#
+# Every action is pinned to a full commit SHA, with the release tag in a comment. To update one,
+# look up the new tag's commit (`gh api repos/<owner>/<repo>/git/ref/tags/<tag>`; an annotated tag
+# needs one more hop through `git/tags/<sha>`) and change both the SHA and the comment.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read # lets paths-filter list the files of a pull request
+
+concurrency:
+  # a newer push to a PR replaces the run in progress; runs on main always finish
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  STYLUA_VERSION: v2.3.1 # same as .pre-commit-config.yaml
+  RUFF_VERSION: 0.17.5
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      lua: ${{ steps.filter.outputs.lua }}
+      python: ${{ steps.filter.outputs.python }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Find what changed
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            lua:
+              - 'src/**'
+              - 'tests/lua/**'
+              - 'CharacterMarkdown.txt'
+              - '.luacheckrc'
+              - '.stylua.toml'
+              - 'scripts/**'
+              - 'Taskfile.yaml'
+              - 'taskfiles/Dev.yaml'
+              - 'README.md'
+              - 'README_ESOUI.txt'
+              - 'CHANGELOG.md'
+              - 'LICENSE'
+              - '.github/workflows/ci.yaml'
+            python:
+              - 'tools/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - 'data/**'
+              - 'src/settings/Defaults.lua'
+              - '.github/workflows/ci.yaml'
+
+  lua:
+    name: Lua (lint, validate, tests)
+    needs: changes
+    if: needs.changes.outputs.lua == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Task
+        uses: arduino/setup-task@c0bc642852239c2689f73f4ea6459c29405f3c52 # v3.0.0
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ESO runs Lua 5.1; LuaJIT is the same language and is what the project's tasks call.
+      # The action also links `lua` to it, which scripts/validate-manifest.lua uses.
+      - name: Install LuaJIT
+        uses: leafo/gh-actions-lua@32909a2dea0a48c433aec79e7fcd31b4cd55800f # v13.1.0
+        with:
+          luaVersion: luajit-2.1
+
+      - name: Install LuaRocks
+        uses: leafo/gh-actions-luarocks@1c4a92caecc8f6850f673cbadfd57b3e555417ce # v6.1.1
+
+      - name: Install Luacheck
+        run: luarocks install luacheck
+
+      - name: Lint (Luacheck)
+        run: task dev:lint
+
+      - name: Validate manifest, files and syntax
+        run: task dev:validate
+
+      - name: Validate ESOUI compliance, changelog and README
+        run: |
+          task dev:validate:esoui
+          task dev:validate:changelog
+          task dev:validate:readme
+
+      # The offline Lua specs exist from the branch that adds tests/lua onwards.
+      - name: Offline Lua specs
+        if: hashFiles('tests/lua/run.lua') != ''
+        run: task dev:test:lua
+
+      # Not blocking yet: src/ already has formatting differences on main (10 files at the time
+      # this was written), so a blocking check would fail every PR that touches one. Make this
+      # blocking after a formatting-only cleanup (remove continue-on-error).
+      - name: Format check (StyLua, advisory)
+        uses: JohnnyMorganz/stylua-action@76fd70c03e6340ceaf673366712db9b20560b402 # v5.0.0
+        continue-on-error: true
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ env.STYLUA_VERSION }}
+          args: --config-path .stylua.toml --check src
+
+  python:
+    name: Python ${{ matrix.python-version }} (lint, tests)
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # pyproject.toml requires >=3.10; test the oldest supported and a current one
+        python-version: ['3.10', '3.13']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # the tools themselves use only the standard library; these two are the `setdb` dependency
+      # group, needed so the set database tests run instead of skipping
+      - name: Install test dependencies
+        run: python -m pip install 'jsonschema>=4.20' 'pyyaml>=6.0'
+
+      - name: Lint (Ruff)
+        if: matrix.python-version == '3.13'
+        uses: astral-sh/ruff-action@278981a28ce3188b1e39527901f38254bf3aac89 # v4.1.0
+        with:
+          version: ${{ env.RUFF_VERSION }}
+          src: tools
+          args: check
+
+      - name: Tests
+        run: python -m unittest discover -s tools -t . -p 'test_*.py'
+
+  result:
+    name: CI result
+    needs: [changes, lua, python]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      # The single check to require. A skipped job (its files did not change) passes; a failed or
+      # cancelled one, or a failure to detect changes, does not.
+      - name: Check results
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "job results: $RESULTS"
+          case " $RESULTS " in
+            *" failure "*|*" cancelled "*) echo "A required job did not pass."; exit 1 ;;
+          esac
