@@ -232,11 +232,15 @@ task test           # All checks
   when `tests/lua/` exists, and an advisory StyLua format check (it does not fail the run yet because `src/`
   has existing formatting differences).
 - **Python jobs** (only when `tools/`, `pyproject.toml`, `data/` or `src/settings/Defaults.lua` change):
-  Ruff on `tools/` and the unit tests on Python 3.10 and 3.13.
+  Ruff lint and `ruff format --check`, the Pyrefly type checker (`basic` preset) and the unit tests on
+  Python 3.10 and 3.13 (the linters and type checker run on 3.13 only).
+- **Shell job** (only when `scripts/` changes): ShellCheck at error severity.
+- **Workflow job** (only when a workflow changes): `actionlint`, including ShellCheck on the scripts inside workflows.
 - **`CI result`** is the one check to require in branch protection. It passes when every job that ran
   passed or was skipped, which a workflow-level `paths:` filter cannot do.
 
-Actions are pinned to a commit SHA with the release tag in a comment; update both together.
+Actions are pinned to a commit SHA with the release tag in a comment; update both together. Dependabot
+(`.github/dependabot.yml`) opens a weekly PR that does this.
 
 For comprehensive testing procedures, see the [Testing Guide](TESTING_COMMAND.md).
 
