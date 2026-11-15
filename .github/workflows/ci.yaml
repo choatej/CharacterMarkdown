@@ -1,6 +1,7 @@
 name: CI
 
-# Runs the checks a pull request should pass, on every PR update and on every merge to main.
+# Runs the checks a pull request should pass, on every PR update and on every merge to main
+# (and to integration/all, the fork's branch that collects every change).
 #
 # Lua checks run only when Lua-side files change, Python checks only when Python-side files change.
 # The filtering is done per job (not with a workflow-level `paths:` filter) so the "CI result" job
@@ -12,10 +13,12 @@ name: CI
 # needs one more hop through `git/tags/<sha>`) and change both the SHA and the comment.
 
 on:
+  # Any pull request, whatever branch it targets (main, integration/all, ...), is checked.
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  # After a merge: main, and the fork's integration branch (a no-op in a repository without it).
   push:
-    branches: [main]
+    branches: [main, integration/all]
 
 permissions:
   contents: read
