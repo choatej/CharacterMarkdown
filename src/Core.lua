@@ -421,9 +421,13 @@ function CM.GetSettings()
 
         -- Then, overlay saved values (which may be true, false, or other types)
         -- IMPORTANT: We must overlay ALL saved values, including false, to respect user settings
-        for key, savedValue in pairs(settings) do
-            -- Only merge keys that exist in defaults (ignore internal keys like _metadata, filters, etc.)
-            if defaults[key] ~= nil then
+        -- Read each known setting by key (not with pairs): ZO_SavedVars serves values that are not
+        -- stored on the table itself (for example a migrated snapshot) through a metatable
+        -- fallback, and pairs() cannot see those, so they would be lost here.
+        -- Only keys that exist in defaults are merged (ignores internal keys like _metadata, filters, etc.)
+        for key in pairs(defaults) do
+            local savedValue = settings[key]
+            if savedValue ~= nil then
                 -- Overlay saved value (even if it's false - this respects user's disabled settings)
                 merged[key] = savedValue
             end

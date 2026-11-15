@@ -220,6 +220,7 @@ local function InitializeCommands()
     local settings = CM.commands.settings or {}
     local test = CM.commands.test or {}
     local sets = CM.commands.sets or {}
+    local save = CM.commands.save or {}
 
     -- Check for LibSlashCommander
     if LibSlashCommander then
@@ -229,6 +230,15 @@ local function InitializeCommands()
         local cmd = LibSlashCommander:Register({ "/cm", "/markdown" }, function(args)
             GenerateOutput("markdown")
         end, "Character Markdown")
+
+        -- Subcommand: save [format] (export to SavedVariables)
+        local saveCmd = cmd:RegisterSubCommand()
+        saveCmd:AddAlias("save")
+        saveCmd:SetCallback(save.HandleSave)
+        saveCmd:SetDescription("Save an export to SavedVariables, or clear them (then /reloadui)")
+        local saveOptions = CM.utils.ExportFormats.Names()
+        saveOptions[#saveOptions + 1] = "clear"
+        saveCmd:SetAutoComplete(saveOptions)
 
         -- Subcommand: settings
         local settingsCmd = cmd:RegisterSubCommand()
@@ -288,6 +298,7 @@ local function InitializeCommands()
         helpCmd:SetCallback(function()
             CM.Info("/cm - Generate Markdown profile (alias: /markdown)")
             CM.Info("/cm coach - Compact AI / build-coach export (aliases: ai, build-coach)")
+            CM.Info("/cm save [format|clear] - Save an export to SavedVariables (then /reloadui)")
             CM.Info("/cm settings - Open settings")
             CM.Info("/cm version - Show version")
             CM.Info("/cm debug - Toggle debug")
@@ -391,6 +402,8 @@ local function InitializeCommands()
                 GenerateOutput("markdown")
             elseif command == "coach" or command == "ai" or command == "build-coach" then
                 GenerateOutput("coach")
+            elseif command == "save" then
+                save.HandleSave(rest)
             elseif command == "settings" or command == "s" then
                 if rest:match("^show") then
                     settings.HandleSettingsShow()
@@ -442,6 +455,7 @@ local function InitializeCommands()
             elseif command == "help" then
                 CM.Info("/cm - Generate Markdown profile (alias: /markdown)")
                 CM.Info("/cm coach - Compact AI / build-coach export (aliases: ai, build-coach)")
+                CM.Info("/cm save [format|clear] - Save an export to SavedVariables (then /reloadui)")
                 CM.Info("/cm settings - Open settings")
                 CM.Info("/cm debug - Toggle debug")
                 CM.Info("/cm version - Show version")

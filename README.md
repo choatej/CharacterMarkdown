@@ -37,6 +37,19 @@
 3. Click "Select All" → Copy (Ctrl+C)
 4. Paste anywhere (Markdown viewers, data tools, etc.)
 
+### Save to a File (no copy/paste)
+The game cannot write files directly, but it saves add-on data to a `SavedVariables` folder. `/cm save` uses that to hand your export to a small script:
+
+1. In game: `/cm save` (or `/cm save coach` for the compact export)
+2. In game: `/reloadui` (this is when the game writes the file)
+3. On your PC, from the repository folder:
+   ```
+   python3 -m tools.sv_export --out ~/exports
+   ```
+   This writes `<Character>_<date>.md` (and `<Character>_coach_<date>.md` for the compact export). Python 3.10+ is needed, with no extra packages.
+
+The script looks for `Documents/Elder Scrolls Online/live/SavedVariables/CharacterMarkdown.lua` (including OneDrive and WSL locations). Pass the file path as an argument or set `ESO_SV` if yours is elsewhere; use `--server pts` for the PTS client and `--character NAME` to convert one character.
+
 ## 📋 What's Included
 
 ### Core Information

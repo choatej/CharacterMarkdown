@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Save to SavedVariables**: `/cm save` (and `/cm save coach`) writes the generated Markdown to the `CharacterMarkdownExport` SavedVariables table in pieces under the 2000-character limit, so an external script can read it from `SavedVariables/CharacterMarkdown.lua` after `/reloadui` instead of copying from the window
+- **Export converter**: `python3 -m tools.sv_export` reads `SavedVariables/CharacterMarkdown.lua` and writes `<Character>_<date>.md` for each saved character (standard library only; reuses the `tools.setdb` Lua reader)
+- **Save to SavedVariables**: `/cm save [format]` (formats: `markdown`, `coach`; more can be registered in `src/utils/ExportFormats.lua`) writes the generated Markdown to the `CharacterMarkdownExport` SavedVariables table in pieces under the 2000-character limit, so an external script can read it from `SavedVariables/CharacterMarkdown.lua` after `/reloadui` instead of copying from the window
+- **Achievement progress dump**: `/cm save achievements` saves every uncompleted achievement with its progress (counts, and the unfinished items of checklist achievements) as a separate export, kept out of the normal profile because it is large
+- **Structured data export**: `/cm save data` saves what the collectors gathered (the data the Markdown is built from) as nested tables instead of text, so tools outside the game can produce their own formats; values SavedVariables cannot hold are dropped and listed in the saved report, and strings over the 2000-character limit are stored as `$parts` lists; it also includes the Custom Title and Play Style settings next to the Build Notes
+- **Clear saved exports**: `/cm save clear` removes the saved exports from SavedVariables (`/cm save clear <format>` removes one format for every character), since saved exports stay in the file and are loaded at every login until replaced
+- **Offline Lua tests**: `task dev:test:lua` runs specs from `tests/lua/` under LuaJIT with small ESO stubs (a minimal runner, no dependencies); the first specs check that every file in the manifest compiles as Lua 5.1 and that the settings defaults are well formed. `task test` now runs them and the Python tool tests
+- **Configuration tree (design, not yet used by the add-on)**: `data/config/tree.json` maps every one of the 73 settings and all 35 export topics onto one tree of what an export can contain; `tools/cmconfig` loads it (`ConfigCollection`, `ConfigItem` with parent/children/cascade/select, `ConfigData` for the saved values), migrates the old flat settings onto it and back, and turns a list of paths such as `activities.antiquities` into the matching topics. Tests check the tree against `Defaults.lua` and the export model
+- **Structured export model**: `python3 -m tools.cmdata` reads a structured export (the JSON from `tools.sv_export`) into typed Python objects for every collected topic (character, stats, equipment, skills, champion points, antiquities, crafting, inventory, collectibles, quests, world progress and more), stores repeated data once, and writes it as cleaned JSON or compact Markdown (colour codes, emoji, ids and unnamed numbers removed); `--topics` picks which Markdown sections to print, for example only the antiquity leads expiring within a week
 - **CI workflow**: `.github/workflows/ci.yaml` checks every pull request update and every merge to `main`. Lua checks (Luacheck, manifest, ESOUI, changelog and README validation, offline specs) run only when Lua-side files change and Python checks (Ruff lint and format check, Pyrefly, unit tests on 3.10 and 3.13) only when Python-side files change; ShellCheck runs when `scripts/` changes and actionlint when a workflow changes; a single `CI result` job is the one to require. Actions are pinned by commit SHA, and Dependabot proposes updates to them
 - **Optional libraries**: LibChatMessage (chat pipeline), LibAsync (frame-yielding inventory/achievements collection), LibCustomIcons (formalized optional dep + integration helper)
 - **AI / Build Coach export**: `/cm coach` (aliases `ai`, `build-coach`; `/markdown` is an alias for `/cm`) emits a compact paste schema (identity, bars, sets, collectibles, CP, notes, gaps) for ChatGPT/Claude; LAM **Preset: AI / Build Coach** for lean normal exports
@@ -16,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Curse status**: Overview and Build Coach report Vampirism and Lycanthropy as Active (vampire includes Stage N), Cured, or Never
 
 ### Changed
+- **Antiquity leads**: Active Leads are sorted soonest-to-expire first, timers read `3d 4h`, leads expiring within 7 days are marked with a warning, and the summary counts them
 - **Chunking complete**: `/cm` and regenerate still print the chat ready line and also show a center-screen announcement (Lazy Writ Crafter style)
 - **Passive ranks**: Character Progress and Alliance War passive lists show `(current/max)` for multi-rank passives (e.g. Grace, Chemistry)
 - **Slash command**: `/cm` is preferred; `/markdown` remains a full alias for the same command
@@ -27,8 +37,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Armory Builds**: graduated from BETA; Solo PvE / PvP presets still enable `includeArmoryBuilds` (factory default remains Off)
 
 ### Fixed
+- **Docs**: `examples/templates/claude_project_setup.md` no longer tells users to run `/cm github` (that format was removed); it now documents `/cm`, `/cm coach`, and copying multi-chunk exports
+- **Settings panel**: the "External Links" header no longer says "(GitHub format only)"; there is a single markdown output now
 - **Regenerate**: no longer writes a Generating placeholder into the window (it sat under the color bar and buttons)
 - **Armory Builds**: section no longer always shows "No armory data available" (flat collector payload now accepted by the generator)
+- **Settings**: settings served from the SavedVariables fallback layer (for example values carried over by the server-namespace migration) now reach the generators; the merged settings view read only the table's own keys, so sections such as Antiquities and Achievements stayed off even though the settings panel showed them on
+- **Antiquities**: the section no longer disappears from the export: the Active Leads table used quality constants that do not exist in the game ("table index is nil"), and the detailed sets table read a field the collector never sets; either error dropped the whole section
+- **Antiquity leads**: the lead timer is read fresh on every export (it was cached and could show the first export's value for the rest of the session); each lead also records an approximate `leadExpiresAt`
 
 ## [2.3.0] - 2026-08-03
 
