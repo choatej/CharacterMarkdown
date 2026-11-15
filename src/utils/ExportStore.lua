@@ -322,6 +322,43 @@ function ExportStore.PutData(container, name, entry, meta)
     return container
 end
 
+--- Remove saved exports from `container`.
+-- With a format, only that format is removed (for every character); characters left with no
+-- exports are removed too. Without one, everything is removed.
+-- @param container table|nil the saved table
+-- @param format string|nil format name, compared case-insensitively
+-- @return table|nil the container, or nil when nothing is left in it
+-- @return number how many exports were removed
+function ExportStore.Clear(container, format)
+    if type(container) ~= "table" or type(container.characters) ~= "table" then
+        return nil, 0
+    end
+
+    local removed = 0
+    local wanted = format and format:lower() or nil
+    for name, character in pairs(container.characters) do
+        local exports = type(character) == "table" and character.exports or nil
+        if type(exports) == "table" then
+            for key in pairs(exports) do
+                if not wanted or (type(key) == "string" and key:lower() == wanted) then
+                    exports[key] = nil
+                    removed = removed + 1
+                end
+            end
+            if next(exports) == nil then
+                container.characters[name] = nil
+            end
+        elseif not wanted then
+            container.characters[name] = nil
+        end
+    end
+
+    if not wanted or next(container.characters) == nil then
+        return nil, removed
+    end
+    return container, removed
+end
+
 -- The only CharacterMarkdown-specific line in this file.
 CharacterMarkdown.utils = CharacterMarkdown.utils or {}
 CharacterMarkdown.utils.ExportStore = ExportStore

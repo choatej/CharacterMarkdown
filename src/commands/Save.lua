@@ -1,7 +1,7 @@
 -- CharacterMarkdown - Save Command Handlers
--- /cm save [format] - write an export to SavedVariables. Formats come from the registry in
---                     src/utils/ExportFormats.lua: markdown (default), coach (alias: ai),
---                     data (structured tables instead of text)
+-- /cm save [format] - write an export to SavedVariables. (/cm save clear [format] removes them.)
+--                     Formats come from the registry in src/utils/ExportFormats.lua:
+--                     markdown (default), coach (alias: ai), data (structured tables instead of text)
 --
 -- ESO add-ons cannot write files. SavedVariables is the one channel out of the game:
 -- the client writes the CharacterMarkdownExport table to
@@ -188,15 +188,48 @@ Formats.Register("data", {
     end,
 })
 
---- /cm save [format]
+--- /cm save clear [format]
+-- Remove saved exports (all of them, or one format for every character).
+local function HandleClear(formatArg)
+    local format = nil
+    if formatArg and formatArg ~= "" then
+        -- Accept aliases ("ai" for "coach"); fall back to the raw name so an export whose format
+        -- is no longer registered can still be cleared.
+        local _, canonical = Formats.Resolve(formatArg)
+        format = canonical or formatArg
+    end
+
+    local removed
+    CharacterMarkdownExport, removed = CM.utils.ExportStore.Clear(CharacterMarkdownExport, format)
+
+    if removed == 0 then
+        CM.Info(format and ("No saved " .. format .. " exports to clear.") or "No saved exports to clear.")
+        return
+    end
+    CM.Info(
+        string_format(
+            "Cleared %d saved export%s%s. Type /reloadui to update SavedVariables.",
+            removed,
+            removed == 1 and "" or "s",
+            format and (" (" .. format .. ")") or ""
+        )
+    )
+end
+
+--- /cm save [format | clear [format]]
 -- @param args string|nil a registered format name or alias; empty means "markdown"
 local function HandleSave(args)
+    local arg, rest = (args or ""):match("^%s*(%S*)%s*(%S*)")
+    if arg:lower() == "clear" then
+        HandleClear(rest)
+        return
+    end
+
     if not CM.isInitialized then
         CM.Error("Addon not fully initialized. Try again in a moment or /reloadui")
         return
     end
 
-    local arg = (args or ""):match("^%s*(%S*)")
     local format, name = Formats.Resolve(arg ~= "" and arg or "markdown")
     if not format then
         CM.Error(string_format("Unknown format '%s'.", arg))
