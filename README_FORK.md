@@ -62,6 +62,7 @@ All 12 are on the fork. "Base" is what the branch needs underneath it.
 | `feat/save-clear` | `/cm save clear [format]` removes saved exports | The structured and achievement exports can make the SavedVariables file several megabytes, loaded at every login | export-format-registry |
 | `feat/cmdata-model` | `tools/cmdata`: typed Python objects for every export topic, cleaned JSON and compact Markdown | Reads `/cm save data` output; stores repeated data once (about 20% smaller); `--topics` picks sections | main (pure Python) |
 | `feat/config-tree` | `tests/lua/` offline Lua test framework; `data/config/tree.json` and `tools/cmconfig` (the settings tree, `resolve()`) | See reasons 4 and 5 above | cmdata-model |
+| `feat/ci-workflow` | `.github/workflows/ci.yaml`: PR and main checks, Lua and Python run only when their files change, one `CI result` gate job | The repo had no workflow that checked pull requests (only release and docs) | main |
 
 Two of them are not independent: `feat/structured-data-export` and `feat/save-clear` are siblings (both sit on the
 registry). `feat/config-tree` currently also carries the Lua test framework, which should be split off before any
@@ -85,7 +86,12 @@ upstream/main
 10  feat/save-clear
 11  feat/cmdata-model
 12  feat/config-tree
+13  feat/ci-workflow
 ```
+
+`feat/sv-export-converter` and `feat/config-tree` each gained one small lint-fix commit when the CI workflow was
+added (ruff flagged `print` in `tools/sv_export.py` and a needless dict comprehension in a test), so merge those
+after any earlier copy; the merge conflicts in `pyproject.toml` (two separate per-file ignores) keep both sides.
 
 Independent branches first, then the Lua `/cm save` stack in dependency order, then the Python stack.
 
@@ -126,8 +132,15 @@ In-game commands added here: `/cm save [markdown|coach|data|achievements]`, `/cm
 
 ## Quality checks
 
-Tools used: LuaJIT, Luacheck, StyLua, Task, Python 3. (`ruff` is configured in `pyproject.toml` but not
-installed on this machine, so Python style is checked by hand: 100-character lines, type hints, no `print` outside CLIs.)
+Tools used: LuaJIT, Luacheck, StyLua, Task, Python 3, and Ruff for `tools/`. Ruff is not installed on this machine
+(no pip); a standalone binary can be downloaded from its GitHub releases (`ruff-x86_64-unknown-linux-gnu.tar.gz`, check
+its published SHA-256) and run as `ruff check tools`. It is clean at ruff 0.17.5, the version CI pins.
+
+**CI** (`.github/workflows/ci.yaml`) runs the same checks on every PR update and on every merge to `main`. A changes
+job picks the toolchain: Lua checks (Luacheck, manifest/files/syntax, ESOUI, changelog, README, the offline specs, and an
+advisory StyLua check) when Lua-side files change; Python checks (Ruff, unit tests on 3.10 and 3.13) when Python-side files
+change. `CI result` is the one check to require in branch protection. Every action is pinned to a commit SHA with the
+release tag in a comment. CI has not run on GitHub yet; locally every command in it was run and `actionlint` passes.
 
 | Check | Command | Expected now |
 |-------|---------|--------------|
@@ -239,6 +252,12 @@ gh pr create --repo solaegis/CharacterMarkdown --base main --head choatej:<branc
 - [ ] Write PR drafts for `save-clear`, `structured-data-export`, `cmdata-model` and the test framework
 - [ ] Open the small upstream PR for the `install:live` / `install:pts` Linux bug
 - [ ] Consider reporting the nested settings copies as an upstream issue
-- [ ] Install `ruff` and run it over `tools/`
+- [ ] Watch the first CI run on GitHub for this fork and fix anything the local run could not show (LuaJIT build
+      time on the runner, the `luarocks install luacheck` step, the StyLua action's argument handling)
+- [ ] Require the `CI result` check in branch protection on the fork's `main` (and tell the maintainer it is the one to require)
+- [ ] After a formatting-only cleanup of `src/`, remove `continue-on-error` from the StyLua step so it blocks
+- [ ] Move the existing release, docs and mdBook workflows from version tags to commit SHAs like the new workflow
+- [ ] Consider Dependabot for GitHub Actions so the pinned SHAs get update PRs
+- [ ] Install `ruff` permanently (or add a `task dev:lint:python`) so it does not depend on a downloaded binary
 - [ ] Offline Lua tests for `ExportStore` (splitting, sanitizing, `Clear`); the old ad-hoc harnesses were not committed
 - [ ] Delete `prep-backup/*` and `wip/*` branches once nothing needs them
