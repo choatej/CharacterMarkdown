@@ -148,10 +148,7 @@ tasks:
     desc: Check Lua syntax with LuaJIT
     cmds:
       - echo "  Checking Lua syntax..."
-      - |
-        find {{.SRC_DIR}} -name "*.lua" -type f | while read file; do
-          luajit -bl "$file" > /dev/null || (echo "  ✗ Lua syntax errors in $file" && exit 1)
-        done
+      - find {{.SRC_DIR}} -name "*.lua" -type f -print0 | xargs -0 luajit scripts/check-lua-syntax.lua
       - echo "    ✓ All Lua files syntax valid"
     silent: true
 
