@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Curse status**: Overview and Build Coach report Vampirism and Lycanthropy as Active (vampire includes Stage N), Cured, or Never
 
 ### Changed
+- **Antiquity leads**: Active Leads are sorted soonest-to-expire first, timers read `3d 4h`, leads expiring within 7 days are marked with a warning, and the summary counts them
 - **Chunking complete**: `/cm` and regenerate still print the chat ready line and also show a center-screen announcement (Lazy Writ Crafter style)
 - **Passive ranks**: Character Progress and Alliance War passive lists show `(current/max)` for multi-rank passives (e.g. Grace, Chemistry)
 - **Slash command**: `/cm` is preferred; `/markdown` remains a full alias for the same command
@@ -32,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Armory Builds**: section no longer always shows "No armory data available" (flat collector payload now accepted by the generator)
 - **Settings**: settings served from the SavedVariables fallback layer (for example values carried over by the server-namespace migration) now reach the generators; the merged settings view read only the table's own keys, so sections such as Antiquities and Achievements stayed off even though the settings panel showed them on
 - **Antiquities**: the section no longer disappears from the export: the Active Leads table used quality constants that do not exist in the game ("table index is nil"), and the detailed sets table read a field the collector never sets; either error dropped the whole section
+- **Antiquity leads**: the lead timer is read fresh on every export (it was cached and could show the first export's value for the rest of the session); each lead also records an approximate `leadExpiresAt`
 
 ## [2.3.0] - 2026-08-03
 
