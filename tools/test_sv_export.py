@@ -112,7 +112,7 @@ class SvExportTest(unittest.TestCase):
             sv_export.convert(self.write_sv(sample(count=999)), self.dir / "o")
 
     def test_missing_part_is_reported(self) -> None:
-        broken = sample().replace("[2] = \"caf", "[3] = \"caf")
+        broken = sample().replace('[2] = "caf', '[3] = "caf')
         with self.assertRaisesRegex(sv_export.ExportError, "incomplete"):
             sv_export.convert(self.write_sv(broken), self.dir / "o")
 
