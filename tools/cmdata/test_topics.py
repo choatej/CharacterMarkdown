@@ -81,7 +81,11 @@ ANTIQUITIES = {
         },
     ],
     # the export repeats the leads here; one of them (id 9) is in no set at all
-    "activeLeads": [lead(1, "Later", 20 * DAY), lead(2, "Soon", 2 * DAY), lead(9, "Orphan", 5 * DAY)],
+    "activeLeads": [
+        lead(1, "Later", 20 * DAY),
+        lead(2, "Soon", 2 * DAY),
+        lead(9, "Orphan", 5 * DAY),
+    ],
 }
 
 CRAFTING = {
@@ -122,7 +126,11 @@ CRAFTING = {
             {
                 "name": "Robe",
                 "timeRequiredSecs": 200,
-                "traits": [{"id": 1, "known": True}, {"id": 2, "known": False}, {"id": 5, "known": False}],
+                "traits": [
+                    {"id": 1, "known": True},
+                    {"id": 2, "known": False},
+                    {"id": 5, "known": False},
+                ],
             }
         ],
     },
@@ -149,7 +157,9 @@ TOPICS = {
                 "status": "maxed",
                 "progress": 100,
                 "xp": {"current": 5, "min": 1, "max": 5},
-                "passives": [{"name": "Piercing", "currentRank": 2, "maxRank": 2, "purchased": True}],
+                "passives": [
+                    {"name": "Piercing", "currentRank": 2, "maxRank": 2, "purchased": True}
+                ],
             },
             {"name": "Bow", "rank": 34, "status": "inProgress", "progress": 3, "passives": {}},
         ],
@@ -194,7 +204,13 @@ TOPICS = {
         "werewolfStatus": "never",
         "werewolfStage": 0,
     },
-    "currency": {"gold": 500, "transmute": 10, "transmuteMax": 100, "ap": 7, "summary": {"totalGold": 500}},
+    "currency": {
+        "gold": 500,
+        "transmute": 10,
+        "transmuteMax": 100,
+        "ap": 7,
+        "summary": {"totalGold": 500},
+    },
     "inventory": {
         "backpackUsed": 2,
         "backpackMax": 100,
@@ -203,7 +219,9 @@ TOPICS = {
         "hasCraftingBag": True,
         "bagItems": [{"name": "Sword", "quality": 4, "stack": 1, "slot": 3}],
         "bankItems": {},
-        "craftingBagItems": [{"name": "Berry", "quality": 1, "stack": 9, "itemTypeName": "Ingredient"}],
+        "craftingBagItems": [
+            {"name": "Berry", "quality": 1, "stack": 9, "itemTypeName": "Ingredient"}
+        ],
     },
     "collectibles": {
         "esoPlus": True,
@@ -216,8 +234,15 @@ TOPICS = {
             "hair": {"count": 0, "total": 5, "list": {}},
         },
     },
-    "styles": {"count": 1, "categories": {"all": [{"id": 5, "name": "Robe", "fullName": "Breton Robe"}]}},
-    "titles": {"current": "Hero", "owned": [{"id": 1, "name": "Hero"}], "summary": {"totalAvailable": 9}},
+    "styles": {
+        "count": 1,
+        "categories": {"all": [{"id": 5, "name": "Robe", "fullName": "Breton Robe"}]},
+    },
+    "titles": {
+        "current": "Hero",
+        "owned": [{"id": 1, "name": "Hero"}],
+        "summary": {"totalAvailable": 9},
+    },
     "housing": {
         "owned": [{"id": 1, "name": "House", "nickname": "Home"}],
         "primary": {"name": "Gardner", "furnitureCount": 5, "isListedOnTours": False},
@@ -236,9 +261,20 @@ TOPICS = {
         ]
     },
     "worldProgress": {
-        "skyshards": {"collected": 5, "total": 10, "zones": {"Auridon": {"collected": 5, "total": 5}}},
-        "lorebooks": {"collected": 1, "total": 2, "categories": {"Mages": {"collected": 1, "total": 2}}},
-        "dungeons": {"delves": {"completed": 3, "total": 4}, "publicDungeons": {"completed": 1, "total": 2}},
+        "skyshards": {
+            "collected": 5,
+            "total": 10,
+            "zones": {"Auridon": {"collected": 5, "total": 5}},
+        },
+        "lorebooks": {
+            "collected": 1,
+            "total": 2,
+            "categories": {"Mages": {"collected": 1, "total": 2}},
+        },
+        "dungeons": {
+            "delves": {"completed": 3, "total": 4},
+            "publicDungeons": {"completed": 1, "total": 2},
+        },
         "cadwell": {"levelName": "Gold", "zones": [{"name": "Deshaan"}]},
     },
     "achievements": {
@@ -267,7 +303,11 @@ TOPICS = {
         "basic": {"rank": 6, "rankName": "Tyro", "rankPoints": 90, "campaignName": "None"},
         "stats": {"pvp": {"allianceName": "Covenant", "progression": {"pointsToNext": 55}}},
     },
-    "guilds": {"list": [{"name": "Guild", "rankName": "Trader", "memberCount": 5, "alliance": {"name": "Pact"}}]},
+    "guilds": {
+        "list": [
+            {"name": "Guild", "rankName": "Trader", "memberCount": 5, "alliance": {"name": "Pact"}}
+        ]
+    },
     "appearance": {
         "active": {"hat": {"name": "Hide"}, "pet": {"name": "Bird"}},
         "mount": {"name": "Mammoth", "skinName": "Skin"},
@@ -293,7 +333,13 @@ TOPICS = {
                 "attributes": {"health": 44, "magicka": 20, "stamina": 0},
                 "champion": {"craft": 265, "total": 793},
                 "equipment": [
-                    {"name": "Helm", "slotName": "Head", "slotIndex": 0, "armorType": 2, "setName": "Set A"},
+                    {
+                        "name": "Helm",
+                        "slotName": "Head",
+                        "slotIndex": 0,
+                        "armorType": 2,
+                        "setName": "Set A",
+                    },
                     {"name": "[Empty Slot]", "slotName": "Neck", "slotIndex": 1},
                 ],
                 "hotbars": [
@@ -348,9 +394,7 @@ class AntiquitiesTest(unittest.TestCase):
 
     def test_leads_are_sorted_soonest_first_and_skip_antiquities_without_one(self) -> None:
         names = [x.name for x in self.a.leads()]
-        self.assertEqual(
-            names, ["Soon", "Orphan", "Exactly a week", "Just over a week", "Later"]
-        )
+        self.assertEqual(names, ["Soon", "Orphan", "Exactly a week", "Just over a week", "Later"])
 
     def test_expiring_within_a_week_includes_exactly_a_week(self) -> None:
         names = [x.name for x in self.a.leads_expiring_within()]
@@ -374,7 +418,9 @@ class CraftingTest(unittest.TestCase):
 
     def test_motifs_list_only_missing_chapters(self) -> None:
         full, partial = self.c.motifs
-        self.assertEqual((full.chapters_known, full.chapters_total, full.missing_chapters), (2, 2, []))
+        self.assertEqual(
+            (full.chapters_known, full.chapters_total, full.missing_chapters), (2, 2, [])
+        )
         self.assertEqual(partial.missing_chapters, ["Belts", "Boots"])
         self.assertEqual(self.c.motifs_completed(), 1)
 
@@ -385,8 +431,12 @@ class CraftingTest(unittest.TestCase):
 
     def test_research_is_counted_and_missing_trait_ids_are_kept_for_tools(self) -> None:
         robe = self.c.research["clothing"][0]
-        self.assertEqual((robe.traits_known, robe.traits_total, robe.missing_trait_ids), (1, 3, [2, 5]))
-        self.assertEqual([(line, i.name) for line, i in self.c.research_gaps()], [("clothing", "Robe")])
+        self.assertEqual(
+            (robe.traits_known, robe.traits_total, robe.missing_trait_ids), (1, 3, [2, 5])
+        )
+        self.assertEqual(
+            [(line, i.name) for line, i in self.c.research_gaps()], [("clothing", "Robe")]
+        )
         self.assertEqual(self.c.research_percent, {"blacksmithing": 100, "clothing": 80})
 
     def test_item_sets_styles_and_timers(self) -> None:
@@ -409,13 +459,17 @@ class TopicTest(unittest.TestCase):
     def test_morphs(self) -> None:
         m = SkillMorphs.from_raw(TOPICS["skillMorphs"])
         sweep, wait = m.skills
-        self.assertEqual((sweep.chosen_morph, sweep.morph_options), ("Crescent", ["Everlasting", "Crescent"]))
+        self.assertEqual(
+            (sweep.chosen_morph, sweep.morph_options), ("Crescent", ["Everlasting", "Crescent"])
+        )
         self.assertEqual((wait.chosen_morph, wait.awaiting_choice), (None, True))
         self.assertEqual(sweep.skill_line, "Aedric Spear")
 
     def test_progression(self) -> None:
         p = self.export.progression
-        self.assertEqual((p.unspent_skill_points, p.vampire_status, p.vampire_stage), (2, "active", 1))
+        self.assertEqual(
+            (p.unspent_skill_points, p.vampire_status, p.vampire_stage), (2, "active", 1)
+        )
 
     def test_currency_splits_caps_and_ignores_the_summary(self) -> None:
         c = Currency.from_raw(TOPICS["currency"])
@@ -425,10 +479,14 @@ class TopicTest(unittest.TestCase):
 
     def test_inventory_names_confirmed_qualities_only(self) -> None:
         inv = Inventory.from_raw(TOPICS["inventory"])
-        self.assertEqual((inv.backpack_items[0].quality, inv.backpack_items[0].quality_name), (4, "epic"))
+        self.assertEqual(
+            (inv.backpack_items[0].quality, inv.backpack_items[0].quality_name), (4, "epic")
+        )
         self.assertEqual(inv.bank_items, [])  # {} from the export
         self.assertEqual(inv.crafting_bag_items[0].item_type, "Ingredient")
-        self.assertEqual([quality_name(n) for n in (2, 3, 4, 5)], ["fine", "superior", "epic", "legendary"])
+        self.assertEqual(
+            [quality_name(n) for n in (2, 3, 4, 5)], ["fine", "superior", "epic", "legendary"]
+        )
         self.assertIsNone(quality_name(99))
 
     def test_collectibles(self) -> None:
@@ -440,14 +498,19 @@ class TopicTest(unittest.TestCase):
 
     def test_titles_housing_styles(self) -> None:
         e = self.export
-        self.assertEqual((e.titles.current, e.titles.owned, e.titles.available), ("Hero", ["Hero"], 9))
+        self.assertEqual(
+            (e.titles.current, e.titles.owned, e.titles.available), ("Hero", ["Hero"], 9)
+        )
         self.assertEqual(e.housing.primary.name, "Gardner")
         self.assertEqual(e.housing.owned[0].nickname, "Home")
         self.assertEqual((e.outfit_styles.count, e.outfit_styles.names), (1, ["Breton Robe"]))
 
     def test_quests(self) -> None:
         quest = self.export.quests.active[0]
-        self.assertEqual((quest.name, quest.quest_type, quest.zone, quest.step), ("Quest", "Main", "Zone", "Do it"))
+        self.assertEqual(
+            (quest.name, quest.quest_type, quest.zone, quest.step),
+            ("Quest", "Main", "Zone", "Do it"),
+        )
         self.assertEqual((quest.conditions[0].current, quest.conditions[0].maximum), (1, 3))
 
     def test_world_progress(self) -> None:
@@ -464,12 +527,16 @@ class TopicTest(unittest.TestCase):
         self.assertEqual(e.companion.equipment[0].trait, "Reduces cooldowns by 4.4%.")
         self.assertIsNone(e.companion.equipment[0].set_name)
         self.assertEqual((e.companion.ultimate, e.companion.abilities), ("Gore", ["Char"]))
-        self.assertEqual((e.pvp.rank_name, e.pvp.points_to_next_rank, e.pvp.campaign), ("Tyro", 55, None))
+        self.assertEqual(
+            (e.pvp.rank_name, e.pvp.points_to_next_rank, e.pvp.campaign), ("Tyro", 55, None)
+        )
         self.assertEqual((e.guilds[0].name, e.guilds[0].alliance), ("Guild", "Pact"))
 
     def test_small_topics(self) -> None:
         e = self.export
-        self.assertEqual((e.appearance.mount, e.appearance.pet, e.appearance.dyes_total), ("Mammoth", "Bird", 2))
+        self.assertEqual(
+            (e.appearance.mount, e.appearance.pet, e.appearance.dyes_total), ("Mammoth", "Bird", 2)
+        )
         self.assertEqual((e.location.zone, e.riding.maxed_out), ("Shadowfen", True))
         self.assertEqual(e.mundus.names, ["The Thief"])  # primary + name + names are not repeated
         self.assertEqual((e.dlc_access.accessible, e.dlc_access.locked), (["Cyrodiil"], []))
@@ -479,7 +546,9 @@ class TopicTest(unittest.TestCase):
 
     def test_armory_build_skips_empty_slots_and_bars(self) -> None:
         build_ = self.export.armory_builds[0]
-        self.assertEqual((build_.name, build_.curse, build_.mundus), ("Build 1", "Vampire", "The Thief"))
+        self.assertEqual(
+            (build_.name, build_.curse, build_.mundus), ("Build 1", "Vampire", "The Thief")
+        )
         self.assertEqual([i.name for i in build_.equipment], ["Helm"])
         self.assertEqual(build_.equipment[0].armor_weight, "medium")
         self.assertEqual(build_.bars[0].name, "Front Bar")
@@ -557,7 +626,9 @@ class LeanTopicsTest(unittest.TestCase):
     def test_ai_text_has_no_ids_or_markup(self) -> None:
         text = self.lean(*ALL_SECTIONS)
         self.assertNotIn("|c", text)
-        self.assertNotRegex(text, r"(?i)\b(?:resultId|craftType|abilityId|zoneId|skillId|trait id)\b")
+        self.assertNotRegex(
+            text, r"(?i)\b(?:resultId|craftType|abilityId|zoneId|skillId|trait id)\b"
+        )
         self.assertNotIn("missing_trait_ids", text)
 
     def test_unknown_section_is_an_error(self) -> None:
