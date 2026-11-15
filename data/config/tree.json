@@ -1,0 +1,186 @@
+{
+  "schema": 1,
+  "description": "What a CharacterMarkdown export can contain, as a tree. Each node is something a user can switch on or off; switching a node off switches off everything under it. See data/config/README.md.",
+  "not_in_tree": {
+    "detectedOS": "set by the add-on from the platform, not a user choice"
+  },
+  "sections": [
+    {
+      "id": "character", "label": "Character", "domain": "content",
+      "description": "Who the character is and how far along they are.",
+      "children": [
+        {"id": "identity", "label": "Identity", "settings": ["includeCharacterAttributes"], "topics": ["character", "characterAttributes"],
+         "description": "Name, class, race, alliance, level, champion points, age, ESO Plus.",
+         "children": [
+           {"id": "mundus", "label": "Mundus stone", "topics": ["mundus"], "description": "Active mundus stone(s)."}
+         ]},
+        {"id": "location", "label": "Current location", "settings": ["includeLocation"], "topics": ["location"]},
+        {"id": "role", "label": "Role", "settings": ["includeRole"], "topics": ["role"], "description": "Selected group role (tank, healer, damage)."},
+        {"id": "titles", "label": "Titles", "settings": ["includeTitlesHousing"], "topics": ["titles", "titlesHousing"]},
+        {"id": "housing", "label": "Housing", "settings": ["includeHousing"], "topics": ["housing"]},
+        {"id": "appearance", "label": "Appearance", "settings": ["includeAppearance"], "topics": ["appearance"], "description": "Outfit, dyes, active mount and costume."},
+        {"id": "dlc", "label": "DLC and chapter access", "settings": ["includeDLCAccess"], "topics": ["dlc"]},
+        {"id": "companion", "label": "Companion", "settings": ["includeCompanion"], "topics": ["companion"]},
+        {"id": "progression", "label": "Progression", "settings": ["includeProgression"], "topics": ["progression"],
+         "description": "Unspent points, vampire and werewolf status, achievement points."},
+        {"id": "riding", "label": "Riding skills", "settings": ["includeRidingSkills"], "topics": ["riding"]}
+      ]
+    },
+    {
+      "id": "build", "label": "Build", "domain": "content",
+      "description": "What the character fights with.",
+      "children": [
+        {"id": "champion_points", "label": "Champion points", "settings": ["includeChampionPoints"], "topics": ["cp"],
+         "children": [
+           {"id": "diagram", "label": "Mermaid diagram", "kind": "detail", "settings": ["includeChampionDiagram"],
+            "description": "A diagram of the allocation. Only the Markdown renderer draws it; the data export has nothing extra for it."}
+         ]},
+        {"id": "skills", "label": "Skills",
+         "children": [
+           {"id": "bars", "label": "Skill bars", "settings": ["includeSkillBars"], "topics": ["skillBar"]},
+           {"id": "progress", "label": "Skill line progress", "settings": ["includeSkills"], "topics": ["skill"],
+            "children": [
+              {"id": "morphs", "label": "Available morphs", "kind": "detail", "settings": ["includeSkillMorphs"], "topics": ["skillMorphs"]}
+            ]},
+           {"id": "alliance_war", "label": "Alliance War skill lines", "kind": "detail", "settings": ["showAllianceWarSkills"]}
+         ]},
+        {"id": "equipment", "label": "Equipment", "settings": ["includeEquipment"], "topics": ["equipment"],
+         "children": [
+           {"id": "enhancement", "label": "Enhancement analysis", "kind": "detail", "settings": ["includeEquipmentEnhancement"],
+            "children": [
+              {"id": "analysis", "label": "Detailed analysis", "kind": "detail", "settings": ["showEquipmentAnalysis"]},
+              {"id": "recommendations", "label": "Recommendations", "kind": "detail", "settings": ["showEquipmentRecommendations"]}
+            ]}
+         ]},
+        {"id": "stats", "label": "Combat stats",
+         "children": [
+           {"id": "basic", "label": "Basic stats", "settings": ["includeBasicCombatStats"], "topics": ["stats"],
+            "description": "Health, magicka, stamina, power, critical chance."},
+           {"id": "advanced", "label": "Advanced stats", "settings": ["includeAdvancedStats"], "topics": ["stats.advanced"],
+            "description": "Core abilities, resistances, damage bonuses."},
+           {"id": "attributes", "label": "Attribute distribution", "settings": ["includeAttributes"], "topics": ["character.attributes"]}
+         ]},
+        {"id": "buffs", "label": "Active buffs", "settings": ["includeBuffs"], "topics": ["buffs"]},
+        {"id": "armory", "label": "Armory builds", "settings": ["includeArmoryBuilds"], "topics": ["armoryBuilds"], "description": "Saved loadouts."}
+      ]
+    },
+    {
+      "id": "inventory", "label": "Inventory", "domain": "content",
+      "children": [
+        {"id": "space", "label": "Inventory space", "settings": ["includeInventory"], "topics": ["inventory"],
+         "children": [
+           {"id": "bag_items", "label": "Backpack items", "kind": "detail", "settings": ["showBagContents"], "topics": ["inventory.bagItems"]},
+           {"id": "bank_items", "label": "Bank items", "kind": "detail", "settings": ["showBankContents"], "topics": ["inventory.bankItems"]},
+           {"id": "crafting_bag_items", "label": "Crafting bag items", "kind": "detail", "settings": ["showCraftingBagContents"], "topics": ["inventory.craftingBagItems"]}
+         ]},
+        {"id": "currency", "label": "Currency and resources", "settings": ["includeCurrency"], "topics": ["currency"]}
+      ]
+    },
+    {
+      "id": "crafting", "label": "Crafting", "domain": "content",
+      "children": [
+        {"id": "knowledge", "label": "Crafting knowledge", "settings": ["includeCrafting"], "topics": ["crafting"],
+         "description": "Everything under this node is part of the crafting topic of the data export.",
+         "children": [
+           {"id": "motifs", "label": "Motifs", "settings": ["includeMotifs"], "topics": ["crafting.motifs"],
+            "children": [
+              {"id": "detailed", "label": "Per-chapter detail", "kind": "detail", "settings": ["showMotifsDetailed"]}
+            ]},
+           {"id": "styles", "label": "Outfit styles", "settings": ["includeStyles"], "topics": ["styles", "crafting.styles"],
+            "children": [
+              {"id": "detailed", "label": "Per-style detail", "kind": "detail", "settings": ["showStylesDetailed"]}
+            ]},
+           {"id": "recipes", "label": "Recipes", "settings": ["includeRecipes"], "topics": ["crafting.recipes"],
+            "children": [
+              {"id": "detailed", "label": "Per-recipe lists", "kind": "detail", "settings": ["showRecipesDetailed"]}
+            ]},
+           {"id": "item_sets", "label": "Item set collection", "settings": ["includeItemSetCollection"], "topics": ["crafting.itemSetCollection"]}
+         ]}
+      ]
+    },
+    {
+      "id": "collections", "label": "Collections", "domain": "content",
+      "children": [
+        {"id": "collectibles", "label": "Collectibles", "settings": ["includeCollectibles"], "topics": ["collectibles"],
+         "children": [
+           {"id": "detailed", "label": "Full lists", "kind": "detail", "settings": ["showCollectiblesDetailed"]}
+         ]}
+      ]
+    },
+    {
+      "id": "activities", "label": "Activities", "domain": "content",
+      "description": "What the character has done and is doing.",
+      "children": [
+        {"id": "achievements", "label": "Achievements", "settings": ["includeAchievements"], "topics": ["achievements"],
+         "children": [
+           {"id": "all", "label": "Completed as well as in progress", "kind": "detail", "settings": ["showAllAchievements"]},
+           {"id": "criteria", "label": "Criteria detail", "kind": "detail", "settings": ["includeAchievementDetail"]}
+         ]},
+        {"id": "antiquities", "label": "Antiquities", "settings": ["includeAntiquities"], "topics": ["antiquities"],
+         "children": [
+           {"id": "sets", "label": "Per-set detail", "kind": "detail", "settings": ["showAntiquitiesDetailed"]}
+         ]},
+        {"id": "quests", "label": "Quests", "settings": ["includeQuests"], "topics": ["quests"],
+         "children": [
+           {"id": "categories", "label": "Per-category detail", "kind": "detail", "settings": ["showQuestsDetailed"]},
+           {"id": "all", "label": "All quests, not only active", "kind": "detail", "settings": ["showAllQuests"]}
+         ]},
+        {"id": "undaunted", "label": "Undaunted pledges", "settings": ["includeUndauntedPledges"], "topics": ["undauntedPledges"]},
+        {"id": "world_progress", "label": "World progress", "settings": ["includeWorldProgress"], "topics": ["worldProgress"],
+         "description": "Skyshards, lorebooks, delves and zone completion."},
+        {"id": "endless_dungeon", "label": "Endless Dungeon", "settings": ["includeEndlessDungeon"]},
+        {"id": "pvp", "label": "PvP",
+         "children": [
+           {"id": "overview", "label": "PvP overview", "settings": ["includePvP"], "topics": ["pvp"]},
+           {"id": "statistics", "label": "PvP statistics", "settings": ["includePvPStats"], "topics": ["pvp.stats"],
+            "children": [
+              {"id": "progression", "label": "Rank progress", "kind": "detail", "settings": ["showPvPProgression"]},
+              {"id": "campaign_rewards", "label": "Campaign rewards", "kind": "detail", "settings": ["showCampaignRewards"]},
+              {"id": "leaderboards", "label": "Leaderboards", "kind": "detail", "settings": ["showLeaderboards"]},
+              {"id": "battlegrounds", "label": "Battlegrounds", "kind": "detail", "settings": ["showBattlegrounds"]},
+              {"id": "detailed", "label": "Everything", "kind": "detail", "settings": ["showDetailedPvP"]}
+            ]},
+           {"id": "vengeance", "label": "Vengeance loadout", "settings": ["includeVengeance"], "topics": ["pvp.vengeance"]}
+         ]}
+      ]
+    },
+    {
+      "id": "social", "label": "Social", "domain": "content",
+      "children": [
+        {"id": "guilds", "label": "Guild membership", "settings": ["includeGuilds"], "topics": ["guilds"]},
+        {"id": "mail", "label": "Mail", "settings": ["includeMail"], "topics": ["mail"]}
+      ]
+    },
+    {
+      "id": "profile", "label": "Your own text", "domain": "profile",
+      "description": "Free text the player writes for the reader of the export.",
+      "children": [
+        {"id": "build_notes", "label": "Build notes", "settings": ["includeBuildNotes"], "topics": ["customNotes"]},
+        {"id": "play_style", "label": "Play style", "topics": ["playStyle"]}
+      ]
+    },
+    {
+      "id": "layout", "label": "Markdown layout", "domain": "format",
+      "description": "Structure of the Markdown renderer. A data export has no use for these.",
+      "children": [
+        {"id": "header", "label": "Header", "settings": ["includeHeader"]},
+        {"id": "footer", "label": "Footer", "settings": ["includeFooter"]},
+        {"id": "table_of_contents", "label": "Table of contents", "settings": ["includeTableOfContents"]},
+        {"id": "attention_needed", "label": "Attention needed", "settings": ["includeAttentionNeeded"]},
+        {"id": "quick_stats", "label": "Quick stats", "settings": ["includeQuickStats"]},
+        {"id": "general_overview", "label": "General overview", "settings": ["includeGeneral"]}
+      ]
+    },
+    {
+      "id": "links", "label": "UESP links", "domain": "format",
+      "description": "Wiki links the Markdown renderer adds.",
+      "children": [
+        {"id": "abilities", "label": "Abilities", "settings": ["enableAbilityLinks"]},
+        {"id": "sets", "label": "Sets", "settings": ["enableSetLinks"]},
+        {"id": "motifs", "label": "Motifs", "settings": ["enableMotifLinks"]},
+        {"id": "styles", "label": "Styles", "settings": ["enableStyleLinks"]},
+        {"id": "recipes", "label": "Recipes", "settings": ["enableRecipeLinks"]}
+      ]
+    }
+  ]
+}
